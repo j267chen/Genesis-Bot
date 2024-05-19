@@ -1,2 +1,2 @@
-# Genesis-Bot
-public repo for genesis bot 
+# Maze Runner
+public repo for Maze Runner
