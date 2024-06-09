@@ -41,4 +41,43 @@ void spinRobot(float angle, int motorPower){
 
 task main(){
     configureAllSensors();
+
+    displayString(2, "Maze Runner")
+    displayString(3, "Made by Jason Chen, Zachary Barandino, Eric Mak, and Eric Shaw")
+    displayString(5, "Press Enter to start");
+    while (!(getButtonPress(ButtonEnter)))
+    {}
+    while (getButtonPress(ButtonEnter))
+    {}
+
+    time1[T1] = 0;
+
+    //version 1 of maze solving: (turn left algorithm)
+    bool unsolved = true;
+    while (unsolved)
+    {
+        goRobot(50);
+        while (SensorValue[S3] == (int)colorRed)
+        {}
+        goRobot(0);
+
+        if (SensorValue[S3] == (int)colorGreen)
+        {
+            unsolved = false;
+        }
+        spinRobot(90, 25);
+    }
+    /*
+    need to account for gyro inaccuracies
+    need to introduce a secondary objective: pick up block and sort it
+    
+    could introduce a way to recognize turns and adjust accordingly
+    could introduce A* algorithm to solve maze
+    */
+
+    displayString(5, "Maze Solved!");
+    displayString(6, "Time: %f s", time1[T1] / 1000.0 );
+    wait1Msec(10000);
+
+    return 0;
 }
