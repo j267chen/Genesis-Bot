@@ -2,6 +2,18 @@
 //touch, ultrasonic, color, gyro
 #include <cmath>
 
+/*
+bool checkFinish()
+{
+    if (SensorValue[S3] == (int)colorGreen)
+    {
+        unsolved = false;
+        timetofinish = time1[T1];
+        // is unsolved in scope?
+    }
+}
+*/
+
 void configureAllSensors(){
     sensorType[S1] = sensorEV3_Touch;
     sensorType[S2] = sensorEV3_Ultrasonic;
@@ -21,7 +33,7 @@ void goRobot(int motorPower){
     motor[motorA] = motor[motorD] = motorPower;
 }
 
-void spinRobot(float angle, int motorPower){
+void rotateRobot(float angle, int motorPower){
     motorPower = abs(motorPower);
     resetGyro(S4);
 
@@ -40,3 +52,9 @@ void spinRobot(float angle, int motorPower){
     {}
     goRobot(0);
 }
+
+/*
+void turnLeft()
+{
+}
+*/

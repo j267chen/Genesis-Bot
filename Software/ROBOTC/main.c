@@ -1,11 +1,60 @@
-//all robot code
+//all code
+//#include "EV3_API.h"
 
-#include <iostream>
-#include "default.hpp"
+void configureAllSensors(){
+    sensorType[S1] = sensorEV3_Touch;
+    sensorType[S2] = sensorEV3_Ultrasonic;
+    sensorType[S3] = sensorEV3_Color;
+    sensorType[S4] = sensorEV3_Gyro;
+    wait1Msec(50);
+    
+    SensorMode[S3] = modeEV3Color_Color;
+    SensorMode[S4] = modeEV3Gyro_Calibration; 
+    wait1Msec(50);
 
-using namespace std;
+    SensorMode[S4] = modeEV3Gyro_RateAndAngle;
+    wait1Msec(50);
+}
 
-int main(){
+void goRobot(int motorPower){
+    motor[motorA] = motor[motorD] = motorPower;
+}
+
+void rotateRobot(float angle, int motorPower){
+    motorPower = abs(motorPower);
+    resetGyro(S4);
+
+    if(angle > 0)
+    {
+        motor[motorA] = -motorPower;
+        motor[motorD] = motorPower;
+    }
+    else
+    {
+        motor[motorA] = motorPower;
+        motor[motorD] = -motorPower;
+    }
+    
+    while(abs(getGyroDegrees(S4)) < abs(angle)) 
+    {}
+    goRobot(0);
+}
+
+/*
+void turnLeft()
+
+bool checkFinish()
+{
+    if (SensorValue[S3] == (int)colorGreen)
+    {
+        unsolved = false;
+        timetofinish = time1[T1];
+        // is unsolved in scope?
+    }
+}
+*/
+
+task main(){
     configureAllSensors();
 
     displayString(2, "Maze Runner")
@@ -19,12 +68,7 @@ int main(){
     float timetofinish = 0;
     time1[T1] = 0;
 
-    /*
-    version 1.1 of maze solving: (turn left algorithm which includes intersection lights)
-
-    need to introduce a secondary objective: pick up block and sort it
-    could introduce A* algorithm to solve maze
-    */
+    //version 1.1 of maze solving: (turn left algorithm which includes intersection lights)
     bool unsolved = true;
     while (unsolved)
     {
@@ -37,7 +81,7 @@ int main(){
         if (SensorValue[S3] == (int)colorGreen)
         {
             unsolved = false;
-            timetofinish = time1[T1] / 1000.0;
+            timetofinish = time1[T1];
         }
         //turn left algorithm at turns or ends of paths
         else if (SensorValue[S3] == (int)colorRed)
@@ -54,7 +98,7 @@ int main(){
                 if (SensorValue[S3] == (int)colorGreen)
                 {
                     unsolved = false;
-                    timetofinish = time1[T1] / 1000.0;
+                    timetofinish = time1[T1];
                 }
                 else if (SensorValue[S3] != (int)colorBlack) //go back
                 {
@@ -82,20 +126,15 @@ int main(){
                 }
             }
     }
-
+    /*
+    need to introduce a secondary objective: pick up block and sort it
+    
+    could introduce a way to recognize turns and adjust accordingly
+    could introduce A* algorithm to solve maze
+    */
     displayString(5, "Maze Solved!");
     displayString(6, "Time: %f s", timetofinish);
     wait1Msec(10000);
 
     return 0;
 }
-
-//code to detect, locate, pick up, and sort block
-    //2 objects
-
-//code to grab block
-
-//code to map maze
-    //object
-
-//code to solve maze
