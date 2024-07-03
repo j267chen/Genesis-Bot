@@ -2,14 +2,14 @@
 //#include "EV3_API.h"
 
 void configureAllSensors(){
-    sensorType[S1] = sensorEV3_Touch;
-    sensorType[S2] = sensorEV3_Ultrasonic;
-    sensorType[S3] = sensorEV3_Color;
-    sensorType[S4] = sensorEV3_Gyro;
+    SensorType[S1] = sensorEV3_Touch;
+    SensorType[S2] = sensorEV3_Ultrasonic;
+    SensorType[S3] = sensorEV3_Color;
+    SensorType[S4] = sensorEV3_Gyro;
     wait1Msec(50);
-    
+
     SensorMode[S3] = modeEV3Color_Color;
-    SensorMode[S4] = modeEV3Gyro_Calibration; 
+    SensorMode[S4] = modeEV3Gyro_Calibration;
     wait1Msec(50);
 
     SensorMode[S4] = modeEV3Gyro_RateAndAngle;
@@ -34,8 +34,8 @@ void rotateRobot(float angle, int motorPower){
         motor[motorA] = motorPower;
         motor[motorD] = -motorPower;
     }
-    
-    while(abs(getGyroDegrees(S4)) < abs(angle)) 
+
+    while(abs(getGyroDegrees(S4)) < abs(angle))
     {}
     goRobot(0);
 }
@@ -54,15 +54,15 @@ bool checkFinish()
 }
 */
 
-task main(){
+task main() {
     configureAllSensors();
 
-    displayString(2, "Maze Runner")
-    displayString(3, "Made by Jason Chen, Zachary Barandino, Eric Mak, and Eric Shaw")
+    displayString(2, "Maze Runner");
+    displayString(3, "Made by Jason Chen, Zachary Barandino, Eric Mak, and Eric Shaw");
     displayString(5, "Press Enter to start");
-    while (!(getButtonPress(ButtonEnter)))
+    while (!(getButtonPress(buttonEnter)))
     {}
-    while (getButtonPress(ButtonEnter))
+    while (getButtonPress(buttonEnter))
     {}
 
     float timetofinish = 0;
@@ -72,7 +72,7 @@ task main(){
     bool unsolved = true;
     while (unsolved)
     {
-        goRobot(50);
+        goRobot(25);
         while (SensorValue[S3] == (int)colorBlack)
         {}
         goRobot(0);
@@ -89,7 +89,7 @@ task main(){
             do
             {
                 rotateRobot(90, 25);
-                nmotorEncoder[motorA] = 0;
+                nMotorEncoder[motorA] = 0;
                 goRobot(10); // go until new colour - check if path is available
                 while(SensorValue[S3] == (int)colorRed)
                 {}
@@ -110,31 +110,23 @@ task main(){
             } while (SensorValue[S3] != (int)colorBlack || SensorValue[S3] != (int)colorGreen); //does the turn left algorithm until it detects black or green
         }
         else //accounts for turning error in both directions
-            for(int i = 1; i < 9; i++)
-            {
-                if (i % 2 == 0)
-                {
-                    rotateRobot(5 * i, 25);
-                    if (SensorValue[S3] != (int)colorBlack)
-                        i += 10;
-                }
-                else 
-                {
-                    rotateRobot(-(5 * i), 25); 
-                    if (SensorValue[S3] != (int)colorBlack)
-                        i += 10;
-                }
-            }
-    }
+      	{
+      				bool misaligned = true;
+      				while(misaligned)
+      				{
+                rotateRobot(10, 25);
+                if (SensorValue[S3] == (int)colorBlack || SensorValue[S3] == (int)colorGreen)
+                    misaligned = false;
+            	}
+    		}
+  	}
     /*
     need to introduce a secondary objective: pick up block and sort it
-    
+
     could introduce a way to recognize turns and adjust accordingly
     could introduce A* algorithm to solve maze
     */
     displayString(5, "Maze Solved!");
     displayString(6, "Time: %f s", timetofinish);
     wait1Msec(10000);
-
-    return 0;
 }
