@@ -1,26 +1,14 @@
+void checkFinish();
+
 void configureAllSensors();
 
 void goRobot(int motorPower);
 
-//void mazeSolve();
-
 void rotateRobot(float angle, int motorPower);
 
-/*
-void turnLeft()
+void turnError();
 
-bool checkFinish()
-{
-    if (SensorValue[S3] == (int)colorGreen)
-    {
-        unsolved = false;
-        timetofinish = time1[T1];
-        // is unsolved in scope?
-    }
-}
-*/
-
-
+void turnLeft();
 
 task main() {
     configureAllSensors();
@@ -33,13 +21,17 @@ task main() {
     while (getButtonPress(buttonEnter))
     {}
 
-    const int MOTPOWER = 10;
+    //constants to set drive and turning speeds
+    const int MOTPOWER = 15;
     const int MOTSPINPOWER = 10;
 
     float timetofinish = 0;
     time1[T1] = 0;
 
+    displayString(7, "Time elapsed %f", time1[T1]/1000.0);
+
     //version 1.1 of maze solving: (turn left algorithm which includes intersection lights)
+    //version 1.0 of block acquiring - set blockobtained to false to enable blocks
     bool unsolved = true, blockobtained = true;
     while (unsolved)
     {
@@ -48,75 +40,43 @@ task main() {
         {}
         goRobot(0);
 
-        //check for finish
         if (SensorValue[S3] == (int)colorGreen)
         {
-            if(blockobtained)
-            {
-                unsolved = false;
-                timetofinish = time1[T1];
-            }
+            //can integrate multi block aquiring
+            checkFinish();
         }
-        //turn left algorithm at turns or ends of paths
         else if (SensorValue[S3] == (int)colorRed)
         {
-            //TO DO: have it move a certain mimimum distance
-            do
-            {
-                rotateRobot(90, MOTSPINPOWER);
-                nMotorEncoder[motorA] = 0;
-                goRobot(10); // go until new colour - check if path is available
-                while(SensorValue[S3] == (int)colorRed)
-                {}
-                goRobot(0);
-
-                if (SensorValue[S3] == (int)colorGreen)
-                {
-                    unsolved = false;
-                    timetofinish = time1[T1];
-                }
-                else if (SensorValue[S3] != (int)colorBlack) //go back
-                {
-                    goRobot(-MOTPOWER);
-                    while(nMotorEncoder[motorA] > 0)
-                    {}
-                    goRobot(0);
-                }
-            } while (SensorValue[S3] != (int)colorBlack || SensorValue[S3] != (int)colorGreen); //does the turn left algorithm until it detects black or green
+            turnLeft((int)colorRed);
         }
-        else //accounts for turning error in both directions
+        else
       	{
-            for(int i = 1; i < 6; i++)
-            {
-                if (i % 2 == 0)
-                {
-                    rotateRobot(5 * i, MOTSPINPOWER);
-                    if (SensorValue[S3] == (int)colorBlack)
-                        i += 10;
-                }
-                else 
-                {
-                    rotateRobot(-(5 * i), MOTSPINPOWER); 
-                    if (SensorValue[S3] == (int)colorBlack)
-                        i += 10;
-                }
-            }
+            turnError();
     	}
   	}
-    /*
-    need to introduce a secondary objective: pick up block and sort it
 
-    could introduce a way to recognize turns and adjust accordingly
+    /*
+    secondary objective: pick up block and sort it
+
     could introduce A* algorithm to solve maze
     */
-    displayString(5, "Maze Solved!");
-    displayString(6, "Time: %f s", timetofinish);
+    displayString(9, "Maze Solved!");
+    displayString(11, "Time: %f s", timetofinish);
     wait1Msec(10000);
 }
 
 
-//all code
-//#include "EV3_API.h"
+
+void checkFinish()
+{
+    if(blockobtained)
+    {
+        unsolved = false;
+        timetofinish = time1[T1];
+    }
+    else
+        turnLeft((int)colorGreen);
+}
 
 void configureAllSensors(){
     SensorType[S1] = sensorEV3_Touch;
@@ -155,4 +115,56 @@ void rotateRobot(float angle, int motorPower){
     while(abs(getGyroDegrees(S4)) < abs(angle))
     {}
     goRobot(0);
+}
+
+//turn left algorithm at turns or ends of paths
+//TO DO: have it move a certain mimimum distance
+void turnLeft(int currColor)
+{
+    do
+    {
+        rotateRobot(90, MOTSPINPOWER);
+        nMotorEncoder[motorA] = 0;
+        goRobot(10); // go until new colour - check if path is available
+        while(SensorValue[S3] == currColor)
+        {}
+        goRobot(0);
+
+        if (SensorValue[S3] == (int)colorGreen) //is this correct?
+        {
+            checkFinish();
+        }
+        else if (SensorValue[S3] != (int)colorBlack) //go back
+        {
+            goRobot(-MOTPOWER);
+            while(nMotorEncoder[motorA] > 0)
+            {}
+            goRobot(0);
+        }
+        else
+            turnError();
+    } while (SensorValue[S3] == currColor); 
+    //SensorValue[S3] != (int)colorBlack || SensorValue[S3] != (int)colorGreen
+    //does the turn left algorithm until it detects new colours
+    //but if we see a colour other than red, green, or black, what happens?
+}
+
+//accounts for turning error in both directions
+void turnError()
+{
+    for(int i = 1; i < 6; i++)
+    {
+        if (i % 2 == 0)
+        {
+            rotateRobot(5 * i, MOTSPINPOWER);
+            if (SensorValue[S3] == (int)colorBlack)
+                i += 10;
+        }
+        else 
+        {
+            rotateRobot(-(5 * i), MOTSPINPOWER); 
+            if (SensorValue[S3] == (int)colorBlack)
+                i += 10;
+        }
+    }
 }
