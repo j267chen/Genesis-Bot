@@ -4,6 +4,10 @@ void configureAllSensors();
 
 void goRobot(int motorPower);
 
+bool grabBlock();
+
+bool releaseBlock();
+
 void rotateRobot(float angle, int motorPower);
 
 void turnError();
@@ -54,18 +58,20 @@ task main() {
             turnError();
     	}
   	}
-
-    /*
-    secondary objective: pick up block and sort it
-
-    could introduce A* algorithm to solve maze
-    */
     displayString(9, "Maze Solved!");
     displayString(11, "Time: %f s", timetofinish);
     wait1Msec(10000);
 }
 
-
+/*
+objectives:
+1. To detect and grab blocks - bool grabBlock
+2. To release blocks - bool releaseBlock
+3. To map maze and keep track of everything
+4. To include multiple blocks in a maze
+5. To include block sorting at the finish line
+6. To include maze solving efficiency - A* or D ...
+*/
 
 void checkFinish()
 {
