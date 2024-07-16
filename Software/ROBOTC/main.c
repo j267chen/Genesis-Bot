@@ -8,13 +8,15 @@ bool grabBlock();
 
 bool releaseBlock();
 
+void blockSort(int colours[NUM_COLOURS]);
+
 void rotateRobot(float angle, int motorPower);
 
 void turnError();
 
 void turnLeft();
 
-task main(){
+task main() {
     configureAllSensors();
 
     displayString(2, "Maze Runner");
@@ -29,8 +31,7 @@ task main(){
     const int MOTPOWER = 15;
     const int MOTSPINPOWER = 10;
 
-    //constants to set number of blocks in maze
-    const int NUMBLOCKS = 1;
+    const int NUM_COLOURS = 3;
 
     float timetofinish = 0;
     time1[T1] = 0;
@@ -38,11 +39,9 @@ task main(){
     displayString(7, "Time elapsed %f", time1[T1]/1000.0);
 
     //version 1.1 of maze solving: (turn left algorithm which includes intersection lights)
-    //version 1.1 of block acquiring - set blockobtained to false to enable blocks. includes multiblocking
-
-    int numblocksobtained = 0;
-    bool blockobtained = true; //will be replaced with the return of bool function grabBlock
-    while (numblocksobtained < NUMBLOCKS)
+    //version 1.0 of block acquiring - set blockobtained to false to enable blocks
+    bool unsolved = true, blockobtained = true;
+    while (unsolved)
     {
         goRobot(MOTPOWER);
         while (SensorValue[S3] == (int)colorBlack)
@@ -51,6 +50,7 @@ task main(){
 
         if (SensorValue[S3] == (int)colorGreen)
         {
+            //can integrate multi block aquiring
             checkFinish();
         }
         else if (SensorValue[S3] == (int)colorRed)
@@ -70,11 +70,10 @@ task main(){
 /*
 objectives:
 1. To detect and grab blocks - bool grabBlock
-    the bool is necessary to understand if block is obtained. so the value of the funtion will be read once finish is detected.
 2. To release blocks - bool releaseBlock
-3. To map maze and keep track of everything=
-4. To include block sorting at the finish line - void blockSort with two color sensors
-5. To include multiple blocks in a maze
+3. To map maze and keep track of everything
+4. To include multiple blocks in a maze 
+5. To include block sorting at the finish line
 6. To include maze solving efficiency - A* or D ...
 */
 
@@ -82,9 +81,8 @@ void checkFinish()
 {
     if(blockobtained)
     {
-        numblocksobtained += 1;
-         //include block sorting here. reset the time1[T1] after
-        timetofinish += time1[T1];
+        unsolved = false;
+        timetofinish = time1[T1];
     }
     else
         turnLeft((int)colorGreen);
@@ -179,4 +177,17 @@ void turnError()
                 i += 10;
         }
     }
+}
+
+void blockSort(int colour)
+{
+    int colour 
+
+    // move bot left x amount
+    //turn cc go straight, scan first colour
+    // go back same distance
+    // turn cc move to next colour tile
+    // repeat previous motions
+    // do until scan colour of var
+    // once colour of block is same as tile, move back enough for gripper to place
 }
