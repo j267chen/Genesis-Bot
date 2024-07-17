@@ -4,9 +4,76 @@ void configureAllSensors();
 
 void goRobot(int motorPower);
 
-bool grabBlock();
 
-bool releaseBlock();
+
+int grabBlock(int colourInteger);
+{
+
+  while(SensorValue[S1] != 1) //*constant checking if touch sensor has been activated
+  {}
+
+  if(SensorValue[S3] == 0)
+  {
+    colourInteger = 0;
+  }
+  else if(SensorValue[S3] == 1)
+  {
+    colourInteger = 1;
+  }
+  else if(SensorValue[S3] == 2)
+  {
+    colourInteger = 2;
+  }
+  else if(SensorValue[S3] == 3)
+  {
+    colourInteger = 3;
+  }
+  else if(SensorValue[S3] == 3)
+  {
+    colourInteger = 3;
+  }
+  else if(SensorValue[S3] == 4)
+  {
+    colourInteger = 4;
+  }
+  else if(SensorValue[S3] == 5)
+  {
+    colourInteger = 5;
+  }
+  else if(SensorValue[S3] == 6;)
+  {
+    colourInteger = 6;
+  }
+  else
+  {
+    colourInteger = 7;
+  }
+
+  nMotorEncoder[motorB] = 0;
+
+  motor[motorC] = 20;     //*dont know if + or - power closes/opens jaws or raise/lowers hinge, subject to change
+  wait1Msec(5000); //*jaws will keep power on to continiously close to hold onto object for entire duration
+
+
+  motor[motorB] = 20;
+  while(nMotorEncoder[motorB] <= 60)
+  {}
+  motor[motorB] = 0;
+
+  return colourInteger
+}
+
+
+bool releaseBlock()
+{
+  motor[motorC] = -20;
+  wait1Msec(5000);
+  motor[motorC] = 0;
+
+  return 1
+}
+
+
 
 void rotateRobot(float angle, int motorPower);
 
@@ -155,7 +222,7 @@ void turnLeft(int currColor)
         }
         else
             turnError();
-    } while (SensorValue[S3] == currColor); 
+    } while (SensorValue[S3] == currColor);
     //SensorValue[S3] != (int)colorBlack || SensorValue[S3] != (int)colorGreen
     //does the turn left algorithm until it detects new colours
     //but if we see a colour other than red, green, or black, what happens?
@@ -172,9 +239,9 @@ void turnError()
             if (SensorValue[S3] == (int)colorBlack)
                 i += 10;
         }
-        else 
+        else
         {
-            rotateRobot(-(5 * i), MOTSPINPOWER); 
+            rotateRobot(-(5 * i), MOTSPINPOWER);
             if (SensorValue[S3] == (int)colorBlack)
                 i += 10;
         }
