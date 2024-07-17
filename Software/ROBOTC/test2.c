@@ -1,9 +1,11 @@
 #define MAZE_SIZE 10
 #define MAX_STACK_SIZE 80
+// Mapping vars
 int maze[MAZE_SIZE * MAZE_SIZE]; // ROW * MAX_ROW + COL to collape a 2d array into 1d
 bool isVisited[MAZE_SIZE * MAZE_SIZE];
 int moves[MAX_STACK_SIZE];
 char path[MAX_STACK_SIZE];
+int currRow = 0, currCol = 0, direction = 2; // Start at top left (0,0); direction (N,0)(E,1)(S,2)(W,3)
 // Order: WSEN
 const int dRow[] = { 0, -1, 0, 1 };
 const int dCol[] = { 1, 0, -1, 0 };
@@ -35,14 +37,20 @@ int getCol(int data);
 
 char getDirection(int curr, int next);
 
-// void addNode();
-
+void addNode(int *maze);
 
 task main() {
-		for (int i = 0; i < MAX_STACK_SIZE; i++) {
-				moves[i] = 0;
-				isVisited = false;
+		for (int row = 0; row < MAZE_SIZE; row++) {
+				for (int col = 0; col < MAZE_SIZE; col++) {
+					maze[row * MAZE_SIZE + col] = (int)colorBlack;
+				}
 		}
+		maze[90] = (int)colorGreen;
+
+		char path[MAX_STACK_SIZE] = dfs(maze, currRow, currCol);
+		writeDebugStreamLine("%s", path);
+
+		while(!getButtonPress(buttonEnter)) {}
 }
 
 bool push(mStack *stack, int value)
@@ -184,4 +192,25 @@ char getDirection(int curr, int next) {
 	} else {
 			return '-';
 	}
+}
+
+void addNode(int *maze) {
+	int newRow = currRow, newCol = currCol;
+	switch(direction) {// Update maze position
+	case 0:
+			newRow--;
+			break;
+	case 1:
+			newCol++;
+			break;
+	case 2:
+			newRow++;
+			break;
+	case 3:
+			newCol--;
+			break;
+	default:
+			break;
+	}
+	maze[newRow * MAZE_SIZE + newCol] = SensorValue[S3];
 }
