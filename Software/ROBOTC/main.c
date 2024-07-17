@@ -4,73 +4,38 @@ void configureAllSensors();
 
 void goRobot(int motorPower);
 
-
-
 int grabBlock(int colourInteger);
 {
+    while(SensorValue[S1] != 1) //*constant checking if touch sensor has been activated
+    {}
 
-  while(SensorValue[S1] != 1) //*constant checking if touch sensor has been activated
-  {}
+    colourInteger = SensorValue[S3];
 
-  if(SensorValue[S3] == 0)
-  {
-    colourInteger = 0;
-  }
-  else if(SensorValue[S3] == 1)
-  {
-    colourInteger = 1;
-  }
-  else if(SensorValue[S3] == 2)
-  {
-    colourInteger = 2;
-  }
-  else if(SensorValue[S3] == 3)
-  {
-    colourInteger = 3;
-  }
-  else if(SensorValue[S3] == 3)
-  {
-    colourInteger = 3;
-  }
-  else if(SensorValue[S3] == 4)
-  {
-    colourInteger = 4;
-  }
-  else if(SensorValue[S3] == 5)
-  {
-    colourInteger = 5;
-  }
-  else if(SensorValue[S3] == 6;)
-  {
-    colourInteger = 6;
-  }
-  else
-  {
-    colourInteger = 7;
-  }
+    nMotorEncoder[motorB] = 0;
 
-  nMotorEncoder[motorB] = 0;
+    motor[motorC] = 20;     //*dont know if + or - power closes/opens jaws or raise/lowers hinge, subject to change
+    wait1Msec(5000); //*jaws will keep power on to continiously close to hold onto object for entire duration
 
-  motor[motorC] = 20;     //*dont know if + or - power closes/opens jaws or raise/lowers hinge, subject to change
-  wait1Msec(5000); //*jaws will keep power on to continiously close to hold onto object for entire duration
+    motor[motorB] = 20;
+    while(nMotorEncoder[motorB] <= 60)
+    {}
+    motor[motorB] = 0;
 
-
-  motor[motorB] = 20;
-  while(nMotorEncoder[motorB] <= 60)
-  {}
-  motor[motorB] = 0;
-
-  return colourInteger
+    return colourInteger;
 }
-
 
 bool releaseBlock()
 {
-  motor[motorC] = -20;
-  wait1Msec(5000);
-  motor[motorC] = 0;
+    motor[motorC] = -20;
+    wait1Msec(5000);
+    motor[motorC] = 0;
 
-  return 1
+    motor[motorB] = -20;
+    while(nMotorEncoder[motorB] >= 0)
+    {}
+    motor[motorB] = 0;
+
+    return 1;
 }
 
 
