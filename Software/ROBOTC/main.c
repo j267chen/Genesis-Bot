@@ -31,10 +31,15 @@ task main() {
     const int MOTPOWER = 15;
     const int MOTSPINPOWER = 10;
 
+<<<<<<< Updated upstream
     const int NUM_COLOURS = 3;
+=======
+    //constants to set number of blocks in maze
+    const int NUMBLOCKS = 3;
+>>>>>>> Stashed changes
 
     float timetofinish = 0;
-    time1[T1] = 0;
+    time1[T1] = 0;  
 
     displayString(7, "Time elapsed %f", time1[T1]/1000.0);
 
@@ -107,6 +112,102 @@ void goRobot(int motorPower){
     motor[motorA] = motor[motorD] = motorPower;
 }
 
+<<<<<<< Updated upstream
+=======
+void grabBlock(int & colorInteger)
+{
+    colorInteger = SensorValue[S3];
+
+    nMotorEncoder[motorB] = 0;
+
+    motor[motorC] = 20;     //*dont know if + or - power closes/opens jaws or raise/lowers hinge, subject to change
+    wait1Msec(5000); //*jaws will keep power on to continiously close to hold onto object for entire duration
+
+    motor[motorB] = 20;
+    while(nMotorEncoder[motorB] <= 60)
+    {}
+    motor[motorB] = 0;
+}
+
+bool releaseBlock()
+{
+    motor[motorC] = -20;
+    wait1Msec(5000);
+    motor[motorC] = 0;
+
+    motor[motorB] = -20;
+    while(nMotorEncoder[motorB] >= 0)
+    {}
+    motor[motorB] = 0;
+
+    return true;
+}
+
+void returnGreen()
+
+void sortBlock(int colourInteger, int colorList[NUMBLOCKS]) //if i were to change to a more dynamic sorting, addition of slotFull array would be added to parameters
+{
+    int colourList = [(int)colorRed, (int)colorGreen, (int)colorBlue];
+
+    int xTravelLim = 10 * 180/(2 * 2.75); //converting the max horizontal dist between each block to revolutions
+    int yTravelLim = 10 * 180/(2 * 2.75); // converting the max vertical dist between green to sorting slots to revolutions 
+
+    for(int i = 0; i < NUMBLOCKS; i++) //iterate through list
+    {
+        if (colorList[i] == colorInteger) //find that a colour has been matched
+        {
+            if(i == 1) //check red
+            {
+                nMotorEncoder(motorA) = 0;
+
+                rotateRobot(-90, 20); // ccw rotation
+                wait1Msec(100); // wait
+                goRobot(20); // move forward
+
+                while(nMotorEncoder(motorA) <= xTravelLim) //
+                {}
+
+                nMotorEncoder(motorD) = 0;
+                rotateRobot(90, 20);
+                goRobot(10)
+                while(nMotorEncoder(motorD) < yTravelLim)
+                {}
+
+                goRobot(0);
+                releaseBlock();
+            }
+            else if(i == 2) //check green
+            {
+                nMotorEncoder(motorD) = 0;
+                rotateRobot(90, 20);
+                goRobot(10)
+                while(nMotorEncoder(motorD) < yTravelLim)
+                {}
+
+                goRobot(0);
+                releaseBlock();
+            }
+            else //check blue           
+                rotateRobot(90, 20);
+                wait1Msec(100);
+                goRobot(20);
+
+                while(nMotorEncoder(motorA) <= xTravelLim)
+                {}
+
+                nMotorEncoder(motorD) = 0;
+                rotateRobot(-90, 20);
+                goRobot(10);
+                while(nMotorEncoder(motorD) < yTravelLim)
+                {}
+
+                goRobot(0);
+                releaseBlock();
+        }
+    }
+}
+
+>>>>>>> Stashed changes
 void rotateRobot(float angle, int motorPower){
     motorPower = abs(motorPower);
     resetGyro(S4);
