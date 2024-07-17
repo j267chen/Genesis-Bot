@@ -42,9 +42,10 @@ task main(){
     displayString(7, "Time elapsed %f", time1[T1]/1000.0);
     displayString(9, "Current gyro angle %f", getGyroDegrees(S4));
 
+    int colorInteger = 0;
+
     //version 1.1 of maze solving: (turn left algorithm which includes intersection lights)
     //version 1.1 of block acquiring - set blockobtained to false to enable blocks. includes multiblocking
-
     int numblocksobtained = 0;
     bool blockobtained = true; //will be replaced with the return of bool function grabBlock
     while (numblocksobtained < NUMBLOCKS)
@@ -55,7 +56,7 @@ task main(){
             if(SensorValue[S3] == 1)
             {
                 goRobot(0);
-                grabBlock();
+                grabBlock(colorInteger);
                 goRobot(MOTPOWER);
             }
             else if(getButtonPressed(buttonEnter))
@@ -111,7 +112,7 @@ void checkFinish()
 {
     if(blockobtained)
     {
-        numblocksobtained += 1;
+        numblocksobtained++;
          //include block sorting here. reset the time1[T1] after
         timetofinish += time1[T1];
     }
@@ -138,9 +139,9 @@ void goRobot(int motorPower){
     motor[motorA] = motor[motorD] = motorPower;
 }
 
-int grabBlock(int colourInteger)
+void grabBlock(int & colorInteger)
 {
-    colourInteger = SensorValue[S3];
+    colorInteger = SensorValue[S3];
 
     nMotorEncoder[motorB] = 0;
 
@@ -151,8 +152,6 @@ int grabBlock(int colourInteger)
     while(nMotorEncoder[motorB] <= 60)
     {}
     motor[motorB] = 0;
-
-    return colourInteger;
 }
 
 bool releaseBlock()
@@ -166,7 +165,7 @@ bool releaseBlock()
     {}
     motor[motorB] = 0;
 
-    return 1;
+    return true;
 }
 
 void rotateRobot(float angle, int motorPower){
