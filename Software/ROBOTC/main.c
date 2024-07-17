@@ -2,8 +2,6 @@ void angleAdjust();
 
 void checkFinish();
 
-//void collectBlock();
-
 void configureAllSensors();
 
 void goRobot(int motorPower);
@@ -95,13 +93,10 @@ task main(){
 
 /*
 objectives:
-1. To detect and grab blocks - bool grabBlock
-    the bool is necessary to understand if block is obtained. so the value of the funtion will be read once finish is detected.
-2. To release blocks - bool releaseBlock
-3. To map maze and keep track of everything=
-4. To include block sorting at the finish line - void blockSort with two color sensors
-5. To include multiple blocks in a maze
-6. To include maze solving efficiency - A* or D ...
+1. To map maze and keep track of everything
+2. To include block sorting at the finish line - void blockSort with two color sensors
+3. To include multiple blocks in a maze
+4. To include maze solving efficiency - A* or D ...
 */
 
 void angleAdjust()
@@ -174,13 +169,11 @@ void rotateRobot(float angle, int motorPower){
 
     if(angle > 0)
     {
-        motor[motorA] = -motorPower;
         motor[motorD] = motorPower;
     }
     else
     {
         motor[motorA] = motorPower;
-        motor[motorD] = -motorPower;
     }
 
     while(abs(getGyroDegrees(S4)) < abs(angle))
