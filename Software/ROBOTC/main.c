@@ -214,7 +214,7 @@ void turnLeft(int currColor)
         }
         else
             turnError();
-    } while (SensorValue[S3] == currColor); 
+    } while (SensorValue[S3] == currColor);
     //SensorValue[S3] != (int)colorBlack || SensorValue[S3] != (int)colorGreen
     //does the turn left algorithm until it detects new colours
     //but if we see a colour other than red, green, or black, what happens?
@@ -231,9 +231,9 @@ void turnError()
             if (SensorValue[S3] == (int)colorBlack)
                 i += 10;
         }
-        else 
+        else
         {
-            rotateRobot(-(5 * i), MOTSPINPOWER); 
+            rotateRobot(-(5 * i), MOTSPINPOWER);
             if (SensorValue[S3] == (int)colorBlack)
                 i += 10;
         }
