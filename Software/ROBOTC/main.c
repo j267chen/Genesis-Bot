@@ -8,7 +8,7 @@ void configureAllSensors();
 
 void goRobot(int motorPower);
 
-int grabBlock(int colourInteger);
+int grabBlock(int colorInteger);
 
 bool releaseBlock();
 
