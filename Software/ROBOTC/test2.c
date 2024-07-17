@@ -1,11 +1,12 @@
-#define MAZE_SIZE 9
-#define MAX_STACK_SIZE 50
-int maze[MAZE_SIZE * MAZE_SIZE];
+#define MAZE_SIZE 10
+#define MAX_STACK_SIZE 80
+int maze[MAZE_SIZE * MAZE_SIZE]; // ROW * MAX_ROW + COL to collape a 2d array into 1d
 bool isVisited[MAZE_SIZE * MAZE_SIZE];
+int moves[MAX_STACK_SIZE];
+char path[MAX_STACK_SIZE];
 // Order: WSEN
 const int dRow[] = { 0, -1, 0, 1 };
 const int dCol[] = { 1, 0, -1, 0 };
-
 
 // Stack
 typedef struct {
@@ -22,25 +23,26 @@ bool isEmpty(mStack *stack);
 bool isFull(mStack *stack);
 
 // DFS
-bool isValid(bool *vis, int data);
+bool isValid(int row, int col);
 
-void dfs(int *maze);
+char* dfs(int *maze, int row, int col);
 
 // Mapping
-int makeData(int row, int col, int color);
-
-int getColor(int data);
 
 int getRow(int data);
 
 int getCol(int data);
 
+char getDirection(int curr, int next);
+
 // void addNode();
 
 
 task main() {
-    struct mStack stack;
-
+		for (int i = 0; i < MAX_STACK_SIZE; i++) {
+				moves[i] = 0;
+				isVisited = false;
+		}
 }
 
 bool push(mStack *stack, int value)
@@ -79,27 +81,34 @@ bool isFull(mStack *stack)
     return false;
 }
 
-bool isValid(bool *vis, int data) {
-		int row = getRow(data), col = getCol(data), color = getColor(data);
+bool isValid(int row, int col) {
+		int color = maze[row * MAZE_SIZE + col];
     // If cell is out of bounds
     if (row < 0 || col < 0 || row >= MAZE_SIZE || col >= MAZE_SIZE)
         return false;
-
     // If the cell is already visited
-    if (vis[row * col + col])
+    if (isVisited[row * MAZE_SIZE + col])
         return false;
-
     // If color not black, green, or red, not valid
     if (color != (int)colorBlack && color != (int)colorRed && color != (int)colorGreen)
 				return false;
     return true;
 }
 
-void dfs(int *maze, bool *vis, int row, int col, int color) {
-	  // Initialize stack
+char* dfs(int *maze, int row, int col) {
+	  // Initialize path variables
+		for (int i = 0; i < MAX_STACK_SIZE; i++) {
+				moves[i] = 0;
+				isVisited[i] = false;
+				path[i] = '0';
+		}
+		int moveCounter = 0, pathCounter = 0;
+		int finish = 0;
+
+		// Initialize stack
 		struct mStack stack;
 		stack.size = 0;
-		if(!push(stack, makeData(row, col, color))
+		if(!push(stack, row * MAZE_SIZE + col))
 				stopAllTasks();
 
 		while(!isEmpty(stack)) {
@@ -107,11 +116,13 @@ void dfs(int *maze, bool *vis, int row, int col, int color) {
 				int curr = pop(stack);
 
 				// Check finish
-				if (getColor(curr) == (int)colorRed)
+				if (maze[curr] == (int)colorRed) {
+						finish = curr;
 						break;
+				}
 
 				// Mark visited
-				vis[row * col + col];
+				isVisited[curr] = true;
 
 				// Print element
 
@@ -120,26 +131,57 @@ void dfs(int *maze, bool *vis, int row, int col, int color) {
             int adjx = row + dRow[i];
             int adjy = col + dCol[i];
 
+            int next = maze[adjx * MAZE_SIZE + adjy];
             // Check if valid
-						if (!isValid(vis, curr))
+						if (!isValid(adjx, adjy))
 								continue;
-            push(stack, adjx * adjy + adjy);
+
+						moves[moveCounter] = next * 100 + curr; // Tracks moves by child_curr
+            if(!push(stack, adjx * adjy + adjy))
+            		stopAllTasks();
         }
 		}
-}
-
-int makeData(int row, int col, int color) {
-	return color * 100 + row * 10 + col;
-}
-
-int getColor(int data) {
-	return data / 100;
+		// Find path to finish
+		int cell = finish;
+		while (cell != row * MAZE_SIZE + col) {
+				for (int i = 0; i < MAX_STACK_SIZE; i++) {
+						if (moves[i] / 100 == cell) { // Find cell
+								int next = cell;
+								cell = moves[i] % 100;
+								path[pathCounter] = getDirection(cell, next);
+								pathCounter++;
+								break;
+						}
+				}
+		}
+		char reversePath[MAX_STACK_SIZE];
+		for (int i = pathCounter - 1; i >= 0; i--) { // Reverse path
+				reversePath[pathCounter - i - 1] = path[i];
+		}
+		return reversePath;
 }
 
 int getRow(int data) {
-	return (data % 100) / 10;
+	return data / MAZE_SIZE;
 }
 
 int getCol(int data) {
-	return data % 10;
+	return data % MAZE_SIZE;
+}
+
+char getDirection(int curr, int next) {
+	int rowDiff = getRow(next) - getRow(curr);
+	int colDiff = getCol(next) - getCol(curr);
+
+	if (rowDiff == -1 && colDiff == 0) {
+			return 'N';
+	} else if (rowDiff == 0 && colDiff == 1) {
+			return 'E';
+	} else if (rowDiff == 1 && colDiff == 0) {
+			return  'S';
+	} else if (rowDiff == 0 && colDiff == -1) {
+			return 'W';
+	} else {
+			return '-';
+	}
 }
