@@ -1,10 +1,14 @@
+void angleAdjust();
+
 void checkFinish();
+
+//void collectBlock();
 
 void configureAllSensors();
 
 void goRobot(int motorPower);
 
-bool grabBlock();
+int grabBlock(int colourInteger);
 
 bool releaseBlock();
 
@@ -36,6 +40,7 @@ task main(){
     time1[T1] = 0;
 
     displayString(7, "Time elapsed %f", time1[T1]/1000.0);
+    displayString(9, "Current gyro angle %f", getGyroDegrees(S4));
 
     //version 1.1 of maze solving: (turn left algorithm which includes intersection lights)
     //version 1.1 of block acquiring - set blockobtained to false to enable blocks. includes multiblocking
@@ -46,7 +51,27 @@ task main(){
     {
         goRobot(MOTPOWER);
         while (SensorValue[S3] == (int)colorBlack)
-        {}
+        {
+            if(SensorValue[S3] == 1)
+            {
+                goRobot(0);
+                grabBlock();
+                goRobot(MOTPOWER);
+            }
+            else if(getButtonPressed(buttonEnter))
+            {
+                while (getButtonPress(buttonEnter))
+                {}
+                goRobot(0);
+                angleAdjust(); //incomplete
+
+                while (!(getButtonPress(buttonEnter)))
+                {}
+                while (getButtonPress(buttonEnter))
+                {}
+                goRobot(MOTPOWER);
+            }
+        }
         goRobot(0);
 
         if (SensorValue[S3] == (int)colorGreen)
@@ -62,8 +87,8 @@ task main(){
             turnError();
     	}
   	}
-    displayString(9, "Maze Solved!");
-    displayString(11, "Time: %f s", timetofinish);
+    displayString(11, "Maze Solved!");
+    displayString(13, "Time: %f s", timetofinish);
     wait1Msec(10000);
 }
 
@@ -77,6 +102,10 @@ objectives:
 5. To include multiple blocks in a maze
 6. To include maze solving efficiency - A* or D ...
 */
+
+void angleAdjust()
+{
+}
 
 void checkFinish()
 {
@@ -107,6 +136,37 @@ void configureAllSensors(){
 
 void goRobot(int motorPower){
     motor[motorA] = motor[motorD] = motorPower;
+}
+
+int grabBlock(int colourInteger)
+{
+    colourInteger = SensorValue[S3];
+
+    nMotorEncoder[motorB] = 0;
+
+    motor[motorC] = 20;     //*dont know if + or - power closes/opens jaws or raise/lowers hinge, subject to change
+    wait1Msec(5000); //*jaws will keep power on to continiously close to hold onto object for entire duration
+
+    motor[motorB] = 20;
+    while(nMotorEncoder[motorB] <= 60)
+    {}
+    motor[motorB] = 0;
+
+    return colourInteger;
+}
+
+bool releaseBlock()
+{
+    motor[motorC] = -20;
+    wait1Msec(5000);
+    motor[motorC] = 0;
+
+    motor[motorB] = -20;
+    while(nMotorEncoder[motorB] >= 0)
+    {}
+    motor[motorB] = 0;
+
+    return 1;
 }
 
 void rotateRobot(float angle, int motorPower){
