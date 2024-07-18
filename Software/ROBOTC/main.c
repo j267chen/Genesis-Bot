@@ -17,8 +17,8 @@ void turnError();
 void turnLeft(int currColor, int numblocksobtained);
 
 //constants to set drive and turning speeds
-const int MOTPOWER = 15;
-const int MOTSPINPOWER = 10;
+const int MOTPOWER = 20;
+const int MOTSPINPOWER = 15;
 
 //constants to set number of blocks in maze
 const int NUMBLOCKS = 1;
@@ -77,7 +77,6 @@ task main(){
                 {}
                 goRobot(MOTPOWER);
             }
-
         }
         goRobot(0);
 
@@ -92,9 +91,7 @@ task main(){
             turnLeft((int)colorRed, numblocksobtained);
         }
         else
-      	{
             turnError();
-    		}
   	}
     displayString(11, "Maze Solved!");
     displayString(13, "Time: %f s", timetofinish);
@@ -104,9 +101,8 @@ task main(){
 /*
 objectives:
 1. To map maze and keep track of everything
-2. To include block sorting at the finish line - void blockSort with two color sensors
-3. To include multiple blocks in a maze
-4. To include maze solving efficiency - A* or D ...
+2. To include block sorting at the finish line - void blockSort with two color sensor
+3. To include maze solving efficiency - A* or D ...
 */
 
 void angleAdjust()
@@ -127,11 +123,12 @@ void checkFinish(int & numblocksobtained, bool & blockObtained)
 
 void configureAllSensors(){
     SensorType[S1] = sensorEV3_Touch;
-    SensorType[S2] = sensorEV3_Ultrasonic;
+    SensorType[S2] = sensorEV3_Color;
     SensorType[S3] = sensorEV3_Color;
     SensorType[S4] = sensorEV3_Gyro;
     wait1Msec(50);
 
+    SensorMode[S2] = modeEV3Color_Color;
     SensorMode[S3] = modeEV3Color_Color;
     SensorMode[S4] = modeEV3Gyro_Calibration;
     wait1Msec(50);
@@ -151,7 +148,7 @@ void goRobot(int motorPower){
 
 void grabBlock(int & colorInteger, bool & blockObtained)
 {
-    colorInteger = SensorValue[S3];
+    colorInteger = SensorValue[S2];
 
     nMotorEncoder[motorB] = 0;
 
@@ -183,7 +180,7 @@ void rotateRobot(float angle, int motorPower){
     motorPower = abs(motorPower);
     resetGyro(S4);
 
-    if(angle > 0)
+    if(angle >= 0) //counter-clockwise
     {
     	  motor[motorA] = -motorPower;
         motor[motorD] = motorPower;
@@ -208,9 +205,10 @@ void turnLeft(int currColor, int numblocksobtained)
 		while(nMotorEncoder[motorA] < (PIECE_SIDELENGTH/2.0) * (360.0 / (2 * PI * 2.75)))
 		{}
 		goRobot(0);
+
+		bool firstTurn = true;
     do
     {
-    		bool firstTurn = true;
     		if(firstTurn)
     		{
         	rotateRobot(90, MOTSPINPOWER);
@@ -221,7 +219,7 @@ void turnLeft(int currColor, int numblocksobtained)
 
         nMotorEncoder[motorA] = 0;
         goRobot(MOTPOWER); // go until new colour - check if path is available
-        while(SensorValue[S3] == currColor) // could drive to a given distance anstead
+        while(SensorValue[S3] == currColor) // could drive to a given distance instead and check colour sensor for some time, then decide from there
         {}
         goRobot(0);
 
@@ -238,8 +236,10 @@ void turnLeft(int currColor, int numblocksobtained)
             {}
             goRobot(0);
         }
+        /*
         else
             turnError();
+        */
     } while (SensorValue[S3] == currColor);
     //SensorValue[S3] != (int)colorBlack || SensorValue[S3] != (int)colorGreen
     //does the turn left algorithm until it detects new colours
@@ -253,13 +253,13 @@ void turnError()
     {
         if (i % 2 == 0)
         {
-            rotateRobot(5 * i, MOTSPINPOWER);
+            rotateRobot(5 * i, 15);
             if (SensorValue[S3] == (int)colorBlack)
                 i += 10;
         }
         else
         {
-            rotateRobot(-(5 * i), MOTSPINPOWER);
+            rotateRobot(-(5 * i), 15);
             if (SensorValue[S3] == (int)colorBlack)
                 i += 10;
         }
