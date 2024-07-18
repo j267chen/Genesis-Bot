@@ -1,12 +1,12 @@
 void angleAdjust();
 
-void checkFinish();
+void checkFinish(int & numblocksobtained, bool & blockObtained);
 
 void configureAllSensors();
 
 void goRobot(int motorPower);
 
-int grabBlock(int colorInteger);
+void grabBlock(int colorInteger, bool & blockObtained);
 
 bool releaseBlock();
 
@@ -14,50 +14,57 @@ void rotateRobot(float angle, int motorPower);
 
 void turnError();
 
-void turnLeft();
+void turnLeft(int currColor, int numblocksobtained);
+
+//constants to set drive and turning speeds
+const int MOTPOWER = 15;
+const int MOTSPINPOWER = 10;
+
+//constants to set number of blocks in maze
+const int NUMBLOCKS = 1;
+
+const int PIECE_SIDELENGTH = 5;
+
+int colorInteger = 0;
+
+float timetofinish = 0;
+
+bool blockObtained = true;
 
 task main(){
     configureAllSensors();
 
     displayString(2, "Maze Runner");
-    displayString(3, "Made by Jason Chen, Zachary Barandino, Eric Mak, and Eric Shaw");
-    displayString(5, "Press Enter to start");
+    displayString(3, "Made by JC, ZB, EM, and ES");
+    displayString(5, "Press Enter to start/pause");
     while (!(getButtonPress(buttonEnter)))
     {}
     while (getButtonPress(buttonEnter))
     {}
 
-    //constants to set drive and turning speeds
-    const int MOTPOWER = 15;
-    const int MOTSPINPOWER = 10;
+    displayString(3, "                               ");
+    displayString(5, "                               ");
+    displayString(3, "Press Enter to start/pause");
 
-    //constants to set number of blocks in maze
-    const int NUMBLOCKS = 1;
-
-    float timetofinish = 0;
     time1[T1] = 0;
 
-    displayString(7, "Time elapsed %f", time1[T1]/1000.0);
-    displayString(9, "Current gyro angle %f", getGyroDegrees(S4));
 
-    int colorInteger = 0;
-
+    int numblocksobtained = 0;
     //version 1.1 of maze solving: (turn left algorithm which includes intersection lights)
     //version 1.1 of block acquiring - set blockobtained to false to enable blocks. includes multiblocking
-    int numblocksobtained = 0;
-    bool blockobtained = true; //will be replaced with the return of bool function grabBlock
     while (numblocksobtained < NUMBLOCKS)
     {
         goRobot(MOTPOWER);
+
         while (SensorValue[S3] == (int)colorBlack)
         {
-            if(SensorValue[S3] == 1)
+            if(SensorValue[S1] == 1)
             {
                 goRobot(0);
-                grabBlock(colorInteger);
+                grabBlock(colorInteger, blockObtained);
                 goRobot(MOTPOWER);
             }
-            else if(getButtonPressed(buttonEnter))
+            else if(getButtonPress(buttonEnter))
             {
                 while (getButtonPress(buttonEnter))
                 {}
@@ -70,21 +77,24 @@ task main(){
                 {}
                 goRobot(MOTPOWER);
             }
+
         }
         goRobot(0);
 
         if (SensorValue[S3] == (int)colorGreen)
         {
-            checkFinish();
+            checkFinish(numblocksobtained, blockObtained);
+            releaseBlock();
+            blockObtained = false;
         }
         else if (SensorValue[S3] == (int)colorRed)
         {
-            turnLeft((int)colorRed);
+            turnLeft((int)colorRed, numblocksobtained);
         }
         else
       	{
             turnError();
-    	}
+    		}
   	}
     displayString(11, "Maze Solved!");
     displayString(13, "Time: %f s", timetofinish);
@@ -103,16 +113,16 @@ void angleAdjust()
 {
 }
 
-void checkFinish()
+void checkFinish(int & numblocksobtained, bool & blockObtained)
 {
-    if(blockobtained)
+    if(blockObtained)
     {
         numblocksobtained++;
          //include block sorting here. reset the time1[T1] after
         timetofinish += time1[T1];
     }
     else
-        turnLeft((int)colorGreen);
+        turnLeft((int)colorGreen, numblocksobtained);
 }
 
 void configureAllSensors(){
@@ -132,9 +142,14 @@ void configureAllSensors(){
 
 void goRobot(int motorPower){
     motor[motorA] = motor[motorD] = motorPower;
+
+    displayString(7, "                                       ");
+    displayString(9, "                                       ");
+    displayString(7, "Time elapsed %f", time1[T1]/1000.0);
+    displayString(9, "Current gyro angle %f", getGyroDegrees(S4));
 }
 
-void grabBlock(int & colorInteger)
+void grabBlock(int & colorInteger, bool & blockObtained)
 {
     colorInteger = SensorValue[S3];
 
@@ -147,6 +162,7 @@ void grabBlock(int & colorInteger)
     while(nMotorEncoder[motorB] <= 60)
     {}
     motor[motorB] = 0;
+    blockObtained = true;
 }
 
 bool releaseBlock()
@@ -169,11 +185,13 @@ void rotateRobot(float angle, int motorPower){
 
     if(angle > 0)
     {
+    	  motor[motorA] = -motorPower;
         motor[motorD] = motorPower;
     }
     else
     {
         motor[motorA] = motorPower;
+        motor[motorD] = -motorPower;
     }
 
     while(abs(getGyroDegrees(S4)) < abs(angle))
@@ -183,20 +201,35 @@ void rotateRobot(float angle, int motorPower){
 
 //turn left algorithm at turns or ends of paths
 //TO DO: have it move a certain mimimum distance
-void turnLeft(int currColor)
+void turnLeft(int currColor, int numblocksobtained)
 {
+		nMotorEncoder[motorA] = 0;
+		goRobot(MOTPOWER);
+		while(nMotorEncoder[motorA] < (PIECE_SIDELENGTH/2.0) * (360.0 / (2 * PI * 2.75)))
+		{}
+		goRobot(0);
     do
     {
-        rotateRobot(90, MOTSPINPOWER);
+    		bool firstTurn = true;
+    		if(firstTurn)
+    		{
+        	rotateRobot(90, MOTSPINPOWER);
+        	firstTurn = false;
+      	}
+      	else
+      		rotateRobot(-90, MOTSPINPOWER);
+
         nMotorEncoder[motorA] = 0;
-        goRobot(10); // go until new colour - check if path is available
-        while(SensorValue[S3] == currColor)
+        goRobot(MOTPOWER); // go until new colour - check if path is available
+        while(SensorValue[S3] == currColor) // could drive to a given distance anstead
         {}
         goRobot(0);
 
         if (SensorValue[S3] == (int)colorGreen) //is this correct?
         {
-            checkFinish();
+            checkFinish(numblocksobtained, blockObtained);
+            releaseBlock();
+            blockObtained = false;
         }
         else if (SensorValue[S3] != (int)colorBlack) //go back
         {
