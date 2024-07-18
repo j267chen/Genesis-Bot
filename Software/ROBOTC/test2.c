@@ -1,49 +1,54 @@
-#define MAZE_SIZE 9
-#define MAX_STACK_SIZE 50
-int maze[MAZE_SIZE * MAZE_SIZE];
+#define MAZE_SIZE 6
+#define MAX_STACK_SIZE 70
+// Mapping vars
+short maze[MAZE_SIZE * MAZE_SIZE]; // ROW * MAZE_SIZE + COL to collape a 2d array into 1d
 bool isVisited[MAZE_SIZE * MAZE_SIZE];
+short moves[MAX_STACK_SIZE];
+short path[MAX_STACK_SIZE];
+short currRow = 0, currCol = 0, direction = 2; // Start at top left (0,0); direction (N,0)(E,1)(S,2)(W,3)
 // Order: WSEN
-const int dRow[] = { 0, -1, 0, 1 };
-const int dCol[] = { 1, 0, -1, 0 };
-
+const short dRow[] = { 0, 1, 0, -1 };
+const short dCol[] = { 1, 0, -1, 0 };
 
 // Stack
 typedef struct {
-  int elements[MAX_STACK_SIZE]; // array of elements
-  int size; // current size of the stack
+  short elements[MAX_STACK_SIZE]; // array of elements
+  short size; // current size of the stack
 } mStack;
-
-bool push(mStack *stack, int value);
-
-int pop(mStack *stack);
-
+bool push(mStack *stack, short value);
+short pop(mStack *stack);
 bool isEmpty(mStack *stack);
-
 bool isFull(mStack *stack);
-
 // DFS
-bool isValid(bool *vis, int data);
-
-void dfs(int *maze);
-
+bool isValid(short row, short col);
+void dfs(short *maze, short row, short col);
 // Mapping
-int makeData(int row, int col, int color);
-
-int getColor(int data);
-
-int getRow(int data);
-
-int getCol(int data);
-
-// void addNode();
-
+short getRow(short data);
+short getCol(short data);
+short getDirection(short curr, short next);
+void addNode(short *maze);
 
 task main() {
-    struct mStack stack;
+
+		for (short row = 0; row < MAZE_SIZE; row++) {
+				for (short col = 0; col < MAZE_SIZE; col++) {
+					maze[row * MAZE_SIZE + col] = (short)colorBlack;
+				}
+		}
+		maze[35] = (int)colorRed;
+		for (short i = 0; i < MAX_STACK_SIZE; i++) {
+				path[i] = -1;
+		}
+		dfs(maze, currRow, currCol);
+		for(short i = 0; i < MAX_STACK_SIZE; i++) {
+				writeDebugStreamLine("%hd", path[i]);
+		}
+
+		while(!getButtonPress(buttonEnter)) {}
 
 }
 
-bool push(mStack *stack, int value)
+bool push(mStack *stack, short value)
 {
   if (isFull(stack))
   {
@@ -56,7 +61,7 @@ bool push(mStack *stack, int value)
   return true;
 }
 
-int pop(mStack *stack)
+short pop(mStack *stack)
 {
   if (isEmpty(stack))
     return 0;
@@ -79,67 +84,132 @@ bool isFull(mStack *stack)
     return false;
 }
 
-bool isValid(bool *vis, int data) {
-		int row = getRow(data), col = getCol(data), color = getColor(data);
+bool isValid(short row, short col) {
     // If cell is out of bounds
     if (row < 0 || col < 0 || row >= MAZE_SIZE || col >= MAZE_SIZE)
         return false;
-
     // If the cell is already visited
-    if (vis[row * col + col])
+    if (isVisited[row * MAZE_SIZE + col])
         return false;
-
+    short color = maze[row * MAZE_SIZE + col];
     // If color not black, green, or red, not valid
     if (color != (int)colorBlack && color != (int)colorRed && color != (int)colorGreen)
 				return false;
     return true;
 }
 
-void dfs(int *maze, bool *vis, int row, int col, int color) {
-	  // Initialize stack
+void dfs(short *maze, short row, short col) {
+	  // Initialize path variables
+		for (short i = 0; i < MAX_STACK_SIZE; i++) {
+				moves[i] = 0;
+				path[i] = -1;
+		}
+		for (short i = 0; i < MAZE_SIZE * MAZE_SIZE; i++) {
+				isVisited[i] = false;
+		}
+		short moveCounter = 0, pathCounter = 0;
+		short finish = 0;
+
+		// Initialize stack
 		struct mStack stack;
 		stack.size = 0;
-		if(!push(stack, makeData(row, col, color))
+		if(!push(stack, row * MAZE_SIZE + col))
 				stopAllTasks();
 
 		while(!isEmpty(stack)) {
 				// Pop top
-				int curr = pop(stack);
-
+				short curr = pop(stack);
 				// Check finish
-				if (getColor(curr) == (int)colorRed)
+				if (maze[curr] == (int)colorRed) {
+						finish = curr;
 						break;
+				}
 
 				// Mark visited
-				vis[row * col + col];
+				isVisited[curr] = true;
 
 				// Print element
 
 				// Push all adj cells
-				for (int i = 0; i < 4; i++) {
-            int adjx = row + dRow[i];
-            int adjy = col + dCol[i];
+				for (short i = 0; i < 4; i++) {
+            short adjx = curr / MAZE_SIZE + dRow[i];
+            short adjy = curr % MAZE_SIZE + dCol[i];
 
+            short next = adjx * MAZE_SIZE + adjy;
             // Check if valid
-						if (!isValid(vis, curr))
+						if (!isValid(adjx, adjy))
 								continue;
-            push(stack, adjx * adjy + adjy);
+
+						moves[moveCounter] = next * 100 + curr; // Tracks moves by child_curr
+						moveCounter++;
+            if(!push(stack, adjx * MAZE_SIZE + adjy))
+            		stopAllTasks();
         }
+		}
+		// Find path to finish
+		short cell = finish;
+		short reversePath[MAX_STACK_SIZE];
+		for (short i = 0; i < MAX_STACK_SIZE; i++) {
+				reversePath[i] = -1;
+		}
+
+		while (cell != row * MAZE_SIZE + col) {
+				for (short i = 0; i < MAX_STACK_SIZE; i++) {
+						if (moves[i] / 100 == cell) { // Find cell
+								short next = cell;
+								cell = moves[i] % 100;
+								reversePath[pathCounter] = getDirection(cell, next);
+								pathCounter++;
+								break;
+						}
+				}
+		}
+		for (short i = pathCounter - 1; i >= 0; i--) { // Reverse path
+				path[pathCounter - i - 1] = reversePath[i];
 		}
 }
 
-int makeData(int row, int col, int color) {
-	return color * 100 + row * 10 + col;
+short getRow(short data) {
+	return data / MAZE_SIZE;
 }
 
-int getColor(int data) {
-	return data / 100;
+short getCol(short data) {
+	return data % MAZE_SIZE;
 }
 
-int getRow(int data) {
-	return (data % 100) / 10;
+short getDirection(short curr, short next) {
+	short rowDiff = getRow(next) - getRow(curr);
+	short colDiff = getCol(next) - getCol(curr);
+	if (rowDiff == -1 && colDiff == 0) {
+			return 0;
+	} else if (rowDiff == 0 && colDiff == 1) {
+			return 1;
+	} else if (rowDiff == 1 && colDiff == 0) {
+			return  2;
+	} else if (rowDiff == 0 && colDiff == -1) {
+			return 3;
+	} else {
+			return -1;
+	}
 }
 
-int getCol(int data) {
-	return data % 10;
+void addNode(short *maze) {
+	short newRow = currRow, newCol = currCol;
+	switch(direction) {// Update maze position
+	case 0:
+			newRow--;
+			break;
+	case 1:
+			newCol++;
+			break;
+	case 2:
+			newRow++;
+			break;
+	case 3:
+			newCol--;
+			break;
+	default:
+			break;
+	}
+	maze[newRow * MAZE_SIZE + newCol] = SensorValue[S3];
 }
