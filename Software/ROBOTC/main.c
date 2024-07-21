@@ -21,7 +21,8 @@ bool isEmpty(mStack *stack);
 bool isFull(mStack *stack);
 // DFS
 bool isValid(short row, short col);
-void dfs(short *maze, short row, short col);
+void dfs(short row, short col);
+void goFinish();
 // Mapping
 short getRow(short data);
 short getCol(short data);
@@ -103,7 +104,7 @@ task main(){
         {
 						if(nMotorEncoder[motorA] >= PIECE_SIDELENGTH * ENC_CONV) {
 								addNode();
-								goRobot(0)
+								goRobot(0);
 								nMotorEncoder[motorA] = 0;
 								goRobot(MOTPOWER);
 						}
@@ -111,7 +112,7 @@ task main(){
             {
                 goRobot(0);
                 grabBlock(colorInteger, blockObtained);
-                goRobot(MOTPOWER);
+                goFinish();
             }
             else if(getButtonPress(buttonEnter))
             {
@@ -388,7 +389,7 @@ bool isValid(short row, short col) {
     return true;
 }
 
-void dfs(short *maze, short row, short col) {
+void dfs(short row, short col) {
 	  // Initialize path variables
 		for (short i = 0; i < MAX_STACK_SIZE; i++) {
 				moves[i] = 0;
@@ -456,6 +457,23 @@ void dfs(short *maze, short row, short col) {
 		}
 		for (short i = pathCounter - 1; i >= 0; i--) { // Reverse path
 				path[pathCounter - i - 1] = reversePath[i];
+		}
+}
+
+void goFinish() {
+		dfs(currRow, currCol);
+
+		short counter = 0;
+		while(path[counter] != -1) { // All valid moves
+				while(direction != path[counter]) { // Redirects
+						rotateRobot(90, MOTSPINPOWER);
+				}
+				// Move forward a block
+				nMotorEncoder[motorA] = 0;
+				goRobot(MOTPOWER);
+				while(nMotorEncoder[motorA] < PIECE_SIDELENGTH * ENC_CONV) {}
+				goRobot(0);
+				counter++;
 		}
 }
 
