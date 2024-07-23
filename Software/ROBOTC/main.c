@@ -203,15 +203,15 @@ void grabBlock(int & colorInteger, bool & blockObtained)
     colorInteger = SensorValue[S2];
 
     time1[T2] = 0;
-    motor[motorC] = 20;     //*dont know if + or - power closes/opens jaws or raise/lowers hinge, subject to change
+    motor[motorB] = 20;     //*dont know if + or - power closes/opens jaws or raise/lowers hinge, subject to change
     while(time1[T2] < 5000)
     {}
 
-    nMotorEncoder[motorB] = 0;
-    motor[motorB] = 20;
-    while(nMotorEncoder[motorB] <= 90)
+    nMotorEncoder[motorC] = 0;
+    motor[motorC] = 20;
+    while(nMotorEncoder[motorC] <= 90)
     {}
-    motor[motorB] = 0;
+    motor[motorC] = 0;
     blockObtained = true;
 }
 
