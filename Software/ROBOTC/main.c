@@ -2,7 +2,21 @@
 #define MAX_STACK_SIZE 70
 // Mapping vars
 short maze[MAZE_SIZE * MAZE_SIZE]; // ROW * MAZE_SIZE + COL to collape a 2d array into 1d
+bool isVisited[MAZE_SIZE * MAZE_SIZE];
+short moves[MAX_STACK_SIZE];
+short path[MAX_STACK_SIZE];
+short currRow = 0, currCol = 0, direction = 2; // Start at top left (0,0); direction (N,0)(E,1)(S,2)(W,3)
+// Order: WSEN
+const short dRow[] = { 0, 1, 0, -1 };
+const short dCol[] = { 1, 0, -1, 0 };
 
+// Stack
+typedef struct {
+  short elements[MAX_STACK_SIZE]; // array of elements
+  short size; // current size of the stack
+} mStack;
+bool push(mStack *stack, short value);
+short pop(mStack *stack);
 bool isEmpty(mStack *stack);
 bool isFull(mStack *stack);
 // DFS
