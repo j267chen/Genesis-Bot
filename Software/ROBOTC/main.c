@@ -40,8 +40,8 @@ void turnError();
 void turnLeft(int currColor, int numblocksobtained);
 
 //constants to set drive and turning speeds
-const int MOTPOWER = 25;
-const int MOTSPINPOWER = 15;
+const int MOTPOWER = 75;
+const int MOTSPINPOWER = 30;
 //constants to set number of blocks in maze
 const int NUMBLOCKS = 3;
 const int PIECE_SIDELENGTH = 15;
@@ -65,6 +65,7 @@ task main(){
             path[i] = -1;
     }
 
+
     displayString(2, "Maze Runner");
     displayString(3, "Made by JC, ZB, EM, and ES");
     displayString(5, "Press Enter to start/pause");
@@ -72,6 +73,7 @@ task main(){
     {}
     while (getButtonPress(buttonEnter))
     {}
+
 
     displayString(3, "                               ");
     displayString(5, "                               ");
@@ -96,12 +98,13 @@ task main(){
 								nMotorEncoder[motorA] = 0;
 								goRobot(MOTPOWER);
 						}
-            if(SensorValue[S1] == 1)
+            if(SensorValue[S1] != 0)
             {
                 goRobot(0);
                 grabBlock(colorInteger, blockObtained);
                 if (foundFinish)
                 		goFinish();
+                goRobot(MOTPOWER);
             }
             else if(getButtonPress(buttonEnter))
             {
@@ -121,19 +124,20 @@ task main(){
 
         if (SensorValue[S3] == (int)colorGreen)
         {
+        		foundFinish = true;
         		checkFinish(numblocksobtained, blockObtained);
             releaseBlock();
             blockObtained = false;
 
             addNode();
         }
-        else if (SensorValue[S3] == (int)colorRed || SensorValue[S3] == 1)
+        else if (SensorValue[S3] == (int)colorRed || SensorValue[S3] == (int)colorBlack)
         {
             turnLeft((int)colorRed, numblocksobtained);
         }
         else
       	{
-      			motor[motorB] = 100;
+      			//motor[motorB] = 100;
             turnError();
       	}
 
@@ -201,43 +205,20 @@ void grabBlock(int & colorInteger, bool & blockObtained)
 {
     colorInteger = SensorValue[S2];
 
-<<<<<<< Updated upstream
-    time1[T2] = 0;
-    motor[motorB] = 20;     //*dont know if + or - power closes/opens jaws or raise/lowers hinge, subject to change
-    while(time1[T2] < 5000)
-    {}
-
-    nMotorEncoder[motorC] = 0;
+    //time1[T2] = 0;
+    motor[motorB] = -100;     //*dont know if + or - power closes/opens jaws or raise/lowers hinge, subject to change
+    //while(time1[T2] < 2000){}
+		wait1Msec(2000);
     motor[motorC] = 20;
-    while(nMotorEncoder[motorC] <= 90)
-    {}
-    motor[motorC] = 0;
     blockObtained = true;
-=======
-    nMotorEncoder[motorB] = 0;
-
-    motor[motorC] = 20;     //*dont know if + or - power closes/opens jaws or raise/lowers hinge, subject to change
-    wait1Msec(5000); //*jaws will keep power on to continiously close to hold onto object for entire duration
-
-    motor[motorB] = 20;
-    /*
-    while(nMotorEncoder[motorB] <= 60)
-    {}
-    motor[motorB] = 0;
-    */
-    //blockObtained = true;
->>>>>>> Stashed changes
 }
 
 bool releaseBlock()
 {
-    motor[motorC] = -20;
-    wait1Msec(5000);
     motor[motorC] = 0;
 
-    motor[motorB] = -20;
-    while(nMotorEncoder[motorB] >= 0)
-    {}
+    motor[motorB] = 100;
+    wait1Msec(2000);
     motor[motorB] = 0;
 
     return true;
