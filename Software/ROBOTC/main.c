@@ -28,39 +28,28 @@ short getRow(short data);
 short getCol(short data);
 short getDirection(short curr, short next);
 void addNode();
-
+// Robot Movement
 void angleAdjust();
-
 void checkFinish(int & numblocksobtained, bool & blockObtained);
-
 void configureAllSensors();
-
 void goRobot(int motorPower);
-
 void grabBlock(int colorInteger, bool & blockObtained);
-
 bool releaseBlock();
-
 void rotateRobot(float angle, int motorPower);
-
 void turnError();
-
 void turnLeft(int currColor, int numblocksobtained);
 
 //constants to set drive and turning speeds
-const int MOTPOWER = 20;
+const int MOTPOWER = 25;
 const int MOTSPINPOWER = 15;
-
 //constants to set number of blocks in maze
-const int NUMBLOCKS = 1;
-
-const int PIECE_SIDELENGTH = 5;
-
+const int NUMBLOCKS = 3;
+const int PIECE_SIDELENGTH = 15;
 int colorInteger = 0;
-
 float timetofinish = 0;
+bool blockObtained = false, foundFinish = false;
 
-bool blockObtained = true;
+const int PATHCOLOR = (int)colorBlue;
 
 const float ENC_CONV = 180 / (PI * 2.75);
 
@@ -76,7 +65,6 @@ task main(){
             path[i] = -1;
     }
 
-
     displayString(2, "Maze Runner");
     displayString(3, "Made by JC, ZB, EM, and ES");
     displayString(5, "Press Enter to start/pause");
@@ -90,7 +78,7 @@ task main(){
     displayString(3, "Press Enter to start/pause");
 
     time1[T1] = 0;
-
+		displayString(11, "%hd", direction); // debugging
 
     int numblocksobtained = 0;
     //version 1.1 of maze solving: (turn left algorithm which includes intersection lights)
@@ -100,11 +88,11 @@ task main(){
         nMotorEncoder[motorA] = 0;
         goRobot(MOTPOWER);
 
-        while (SensorValue[S3] == (int)colorBlack)
+        while (SensorValue[S3] == PATHCOLOR)
         {
 						if(nMotorEncoder[motorA] >= PIECE_SIDELENGTH * ENC_CONV) {
-								addNode();
 								goRobot(0);
+								addNode();
 								nMotorEncoder[motorA] = 0;
 								goRobot(MOTPOWER);
 						}
@@ -112,7 +100,8 @@ task main(){
             {
                 goRobot(0);
                 grabBlock(colorInteger, blockObtained);
-                goFinish();
+                if (foundFinish)
+                		goFinish();
             }
             else if(getButtonPress(buttonEnter))
             {
@@ -132,18 +121,22 @@ task main(){
 
         if (SensorValue[S3] == (int)colorGreen)
         {
-            checkFinish(numblocksobtained, blockObtained);
+        		checkFinish(numblocksobtained, blockObtained);
             releaseBlock();
             blockObtained = false;
 
             addNode();
         }
-        else if (SensorValue[S3] == (int)colorRed)
+        else if (SensorValue[S3] == (int)colorRed || SensorValue[S3] == 1)
         {
             turnLeft((int)colorRed, numblocksobtained);
         }
         else
+      	{
+      			motor[motorB] = 100;
             turnError();
+      	}
+
   	}
     displayString(11, "Maze Solved!");
     displayString(13, "Time: %f s", timetofinish);
@@ -163,7 +156,8 @@ void angleAdjust()
 
 void checkFinish(int & numblocksobtained, bool & blockObtained)
 {
-    if(blockObtained)
+    displayString(10, "%hd", numblocksobtained);
+		if(blockObtained)
     {
         numblocksobtained++;
          //include block sorting here. reset the time1[T1] after
@@ -175,13 +169,18 @@ void checkFinish(int & numblocksobtained, bool & blockObtained)
 
 void configureAllSensors(){
     SensorType[S1] = sensorEV3_Touch;
+    wait1Msec(50);
     SensorType[S2] = sensorEV3_Color;
+    wait1Msec(50);
     SensorType[S3] = sensorEV3_Color;
+    wait1Msec(50);
     SensorType[S4] = sensorEV3_Gyro;
     wait1Msec(50);
 
     SensorMode[S2] = modeEV3Color_Color;
+    wait1Msec(50);
     SensorMode[S3] = modeEV3Color_Color;
+    wait1Msec(50);
     SensorMode[S4] = modeEV3Gyro_Calibration;
     wait1Msec(50);
 
@@ -263,7 +262,7 @@ void rotateRobot(float angle, int motorPower){
     {}
     goRobot(0);
     // Update direction
-    if(angle == 90) { // clockwise
+    if(angle == -90) { // clockwise
     		switch(direction) {
     			case 3:
     					direction = 0;
@@ -272,7 +271,7 @@ void rotateRobot(float angle, int motorPower){
     					direction++;
     					break;
     		}
-  	} else if (angle == -90) { // counterclockwise
+  	} else if (angle == 90) { // counterclockwise
   			switch(direction) {
     			case 0:
     					direction = 3;
