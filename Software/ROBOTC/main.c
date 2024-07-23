@@ -202,6 +202,7 @@ void grabBlock(int & colorInteger, bool & blockObtained)
 {
     colorInteger = SensorValue[S2];
 
+<<<<<<< Updated upstream
     time1[T2] = 0;
     motor[motorB] = 20;     //*dont know if + or - power closes/opens jaws or raise/lowers hinge, subject to change
     while(time1[T2] < 5000)
@@ -213,6 +214,20 @@ void grabBlock(int & colorInteger, bool & blockObtained)
     {}
     motor[motorC] = 0;
     blockObtained = true;
+=======
+    nMotorEncoder[motorB] = 0;
+
+    motor[motorC] = 20;     //*dont know if + or - power closes/opens jaws or raise/lowers hinge, subject to change
+    wait1Msec(5000); //*jaws will keep power on to continiously close to hold onto object for entire duration
+
+    motor[motorB] = 20;
+    /*
+    while(nMotorEncoder[motorB] <= 60)
+    {}
+    motor[motorB] = 0;
+    */
+    //blockObtained = true;
+>>>>>>> Stashed changes
 }
 
 bool releaseBlock()
@@ -288,7 +303,9 @@ void turnLeft(int currColor, int numblocksobtained)
         	firstTurn = false;
       	}
       	else
+      	{
       		rotateRobot(-90, MOTSPINPOWER);
+				}
 
         nMotorEncoder[motorA] = 0;
         goRobot(MOTPOWER); // go until new colour - check if path is available
@@ -302,7 +319,7 @@ void turnLeft(int currColor, int numblocksobtained)
             releaseBlock();
             blockObtained = false;
         }
-        else if (SensorValue[S3] != (int)colorBlack) //go back
+        else if (SensorValue[S3] != PATHCOLOR) //go back
         {
             goRobot(-MOTPOWER);
             while(nMotorEncoder[motorA] > 0)
@@ -326,13 +343,13 @@ void turnError()
     {
         if (i % 2 == 0)
         {
-            rotateRobot(5 * i, 15);
+            rotateRobot(5 * i, 5);
             if (SensorValue[S3] == (int)colorBlack)
                 i += 10;
         }
         else
         {
-            rotateRobot(-(5 * i), 15);
+            rotateRobot(-(5 * i), 5);
             if (SensorValue[S3] == (int)colorBlack)
                 i += 10;
         }
