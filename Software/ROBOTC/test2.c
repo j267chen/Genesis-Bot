@@ -26,7 +26,7 @@ void dfs(short *maze, short row, short col);
 short getRow(short data);
 short getCol(short data);
 short getDirection(short curr, short next);
-void addNode(short *maze);
+void addNode();
 
 task main() {
 
@@ -35,7 +35,7 @@ task main() {
 					maze[row * MAZE_SIZE + col] = (short)colorBlack;
 				}
 		}
-		maze[35] = (int)colorRed;
+		maze[11] = (int)colorRed;
 		for (short i = 0; i < MAX_STACK_SIZE; i++) {
 				path[i] = -1;
 		}
@@ -193,23 +193,22 @@ short getDirection(short curr, short next) {
 	}
 }
 
-void addNode(short *maze) {
-	short newRow = currRow, newCol = currCol;
+void addNode() {
 	switch(direction) {// Update maze position
 	case 0:
-			newRow--;
+			currRow--;
 			break;
 	case 1:
-			newCol++;
+			currCol++;
 			break;
 	case 2:
-			newRow++;
+			currRow++;
 			break;
 	case 3:
-			newCol--;
+			currCol--;
 			break;
 	default:
 			break;
 	}
-	maze[newRow * MAZE_SIZE + newCol] = SensorValue[S3];
+	maze[currRow * MAZE_SIZE + currCol] = SensorValue[S3];
 }

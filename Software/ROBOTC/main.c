@@ -7,8 +7,10 @@ bool isVisited[MAZE_SIZE * MAZE_SIZE];
 short moves[MAX_STACK_SIZE];
 short path[MAX_STACK_SIZE];
 short currRow = 0, currCol = 0, direction = 2; // Start at top left (0,0); direction (N,0)(E,1)(S,2)(W,3)
+
 const short dRow[] = { 0, 1, 0, -1 }; // Order: WSEN
 const short dCol[] = { 1, 0, -1, 0 };
+
 // Stack
 typedef struct {
   short elements[MAX_STACK_SIZE]; // array of elements
@@ -26,6 +28,7 @@ void goFinish();
 short getRow(short data);
 short getCol(short data);
 short getDirection(short curr, short next);
+
 void addNode(int color);
 // Robot Movement
 void angleAdjust();
@@ -55,6 +58,16 @@ TFileHandle fout;
 
 task main(){
     configureAllSensors();
+    // Initialize mapping
+    for (short row = 0; row < MAZE_SIZE; row++) {
+            for (short col = 0; col < MAZE_SIZE; col++) {
+                maze[row * MAZE_SIZE + col] = -1;
+            }
+    }
+    for (short i = 0; i < MAX_STACK_SIZE; i++) {
+            path[i] = -1;
+    }
+
 
     // Initialize mapping
     for (short row = 0; row < MAZE_SIZE; row++) {
@@ -78,6 +91,7 @@ task main(){
     {}
     while (getButtonPress(buttonEnter))
     {}
+
     displayString(3, "                               ");
     displayString(5, "                               ");
     displayString(3, "Press Enter to start/pause");
@@ -99,7 +113,6 @@ task main(){
 				    angleAdjust();
 				    afterTurn = false;
     		}
-
     		if (SensorValue[S3] == PATHCOLOR)
         {
         		goRobot(0);
@@ -129,7 +142,7 @@ task main(){
         				turnLeft((int)colorGreen);
         		}
         }
-        else if (SensorValue[S3] == (int)colorRed)
+        else if (SensorValue[S3] == (int)colorRed || SensorValue[S3] == (int)colorBlack)
         {
             addNode((int)colorRed);
         		turnLeft((int)colorRed);
@@ -138,6 +151,7 @@ task main(){
       	{
             turnError();
       	}
+      
 				// Go to next tile
       	if(!afterTurn)
       	{
@@ -343,8 +357,6 @@ void turnLeft(int currColor)
 
         nMotorEncoder[motorA] = 0;
 
-
-
         goRobot(MOTPOWER);
 				while(nMotorEncoder[motorA] < PIECE_SIDELENGTH * ENC_CONV)
 				{
@@ -355,15 +367,6 @@ void turnLeft(int currColor)
 				}
         goRobot(0);
 
-        /*
-        goRobot(MOTPOWER); // go until new colour - check if path is available
-        while(SensorValue[S3] == currColor) { // could drive to a given distance instead and check colour sensor for some time, then decide from there
-        		if(getButtonPress(buttonAny)) {
-            		angleAdjust();
-          	}
-        }
-        goRobot(0);
-        */
 
         if (SensorValue[S3] != PATHCOLOR && SensorValue[S3] != (int)colorRed && SensorValue[S3] != (int)colorGreen) //go back if not valid
         {
@@ -377,12 +380,6 @@ void turnLeft(int currColor)
         }
     } while (SensorValue[S3] == currColor);
     // Back to middle of tile
-    /*
-    nMotorEncoder[motorA] = 0;
-    goRobot(MOTPOWER);
-    while(nMotorEncoder[motorA] <= PIECE_SIDELENGTH / 2.5 * ENC_CONV) {}
-    goRobot(0);
-    */
     afterTurn = true;
 }
 
