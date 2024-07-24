@@ -41,8 +41,8 @@ void turnError();
 void turnLeft(int currColor);
 
 //constants to set drive and turning speeds
-const int MOTPOWER = 35;
-const int MOTSPINPOWER = 25;
+const int MOTPOWER = 30;
+const int MOTSPINPOWER = 20;
 //constants for mapping and navigation
 const int NUMBLOCKS = 3;
 const float PIECE_SIDELENGTH = 15;
@@ -295,7 +295,11 @@ void rotateRobot(float angle, int motorPower) {
         motor[motorD] = -motorPower;
     }
 
-    while(abs(getGyroDegrees(S4)) < abs(angle)) {}
+    while(abs(getGyroDegrees(S4)) < abs(angle)) {
+    	if(getButtonPress(buttonAny)) {
+            		angleAdjust();
+      }
+    }
     goRobot(0);
     // Update direction
     if(angle == -90) { // clockwise
@@ -323,8 +327,6 @@ void rotateRobot(float angle, int motorPower) {
 		*/
 }
 
-//turn left algorithm at turns or ends of paths
-//TO DO: have it move a certain mimimum distance
 void turnLeft(int currColor)
 {
 		bool firstTurn = true;
@@ -341,6 +343,20 @@ void turnLeft(int currColor)
 				}
 
         nMotorEncoder[motorA] = 0;
+
+
+
+        goRobot(MOTPOWER);
+				while(nMotorEncoder[motorA] < PIECE_SIDELENGTH * ENC_CONV)
+				{
+				   if(getButtonPress(buttonAny))
+				   {
+            	angleAdjust();
+          	}
+				}
+        goRobot(0);
+
+        /*
         goRobot(MOTPOWER); // go until new colour - check if path is available
         while(SensorValue[S3] == currColor) { // could drive to a given distance instead and check colour sensor for some time, then decide from there
         		if(getButtonPress(buttonAny)) {
@@ -348,6 +364,7 @@ void turnLeft(int currColor)
           	}
         }
         goRobot(0);
+        */
 
         if (SensorValue[S3] != PATHCOLOR && SensorValue[S3] != (int)colorRed && SensorValue[S3] != (int)colorGreen) //go back if not valid
         {
@@ -361,10 +378,12 @@ void turnLeft(int currColor)
         }
     } while (SensorValue[S3] == currColor);
     // Back to middle of tile
+    /*
     nMotorEncoder[motorA] = 0;
     goRobot(MOTPOWER);
     while(nMotorEncoder[motorA] <= PIECE_SIDELENGTH / 2.5 * ENC_CONV) {}
     goRobot(0);
+    */
     afterTurn = true;
 }
 
