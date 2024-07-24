@@ -33,32 +33,32 @@ void addNode(int color);
 void angleAdjust();
 void configureAllSensors();
 void goRobot(int motorPower);
-void grabBlock(int colorInteger, bool & blockObtained);
+void grabBlock();
 bool releaseBlock();
 void sortBlock(int colourInteger);
 void rotateRobot(float angle, int motorPower);
 void turnError();
-void turnLeft(int currColor, int numblocksobtained);
+void turnLeft(int currColor);
 
 //constants to set drive and turning speeds
-const int MOTPOWER = 25;
-const int MOTSPINPOWER = 15;
-//constants to set number of blocks in maze
+const int MOTPOWER = 35;
+const int MOTSPINPOWER = 25;
+//constants for mapping and navigation
 const int NUMBLOCKS = 3;
 const float PIECE_SIDELENGTH = 15;
 int colorInteger = 0;
 float timetofinish = 0;
-bool blockObtained = false, foundFinish = false;
+bool blockObtained = false, foundFinish = false, afterTurn = false;
+int numblocksobtained = 0;
 const int colorBlocks[3] = {(int)colorRed, (int)colorGreen, (int)colorBlue};
 const int PATHCOLOR = (int)colorBlue;
-
 const float ENC_CONV = 180 / (PI * 2.75);
-bool afterTurn = false;
 
 TFileHandle fout;
 
 task main(){
     configureAllSensors();
+
     // Initialize mapping
     for (short row = 0; row < MAZE_SIZE; row++) {
             for (short col = 0; col < MAZE_SIZE; col++) {
@@ -69,9 +69,11 @@ task main(){
             path[i] = -1;
     }
     maze[0] = 2;
-		// file
+
+		// File
 		bool fileOkay = openWritePC(fout, "fileWrite.txt");
 
+		// Program start
     displayString(2, "Maze Runner");
     displayString(3, "Made by JC, ZB, EM, and ES");
     displayString(5, "Press Enter to start/pause");
@@ -79,59 +81,58 @@ task main(){
     {}
     while (getButtonPress(buttonEnter))
     {}
-
     displayString(3, "                               ");
     displayString(5, "                               ");
     displayString(3, "Press Enter to start/pause");
-
     time1[T1] = 0;
 		displayString(11, "%hd", direction); // debugging
 
-    int numblocksobtained = 0;
     //version 1.1 of maze solving: (turn left algorithm which includes intersection lights)
     //version 1.1 of block acquiring - set blockobtained to false to enable blocks. includes multiblocking
     while (numblocksobtained < NUMBLOCKS)
     {
+    		displayString(11, "%hd", direction);
+
+    		if(afterTurn) {
+    				addNode(PATHCOLOR);
+    				/*
+    				while (!(getButtonPress(buttonEnter))) {}
+				    while (getButtonPress(buttonEnter)) {}
+				    */
+				    afterTurn = false;
+    		}
+
     		nMotorEncoder[motorA] = 0;
         goRobot(MOTPOWER);
-				displayString(11, "%hd", direction);
 
-        while (SensorValue[S3] == PATHCOLOR)
-        {
-						if((nMotorEncoder[motorA] >= PIECE_SIDELENGTH * ENC_CONV && !afterTurn) || (nMotorEncoder[motorA] >= PIECE_SIDELENGTH / 2 * ENC_CONV && afterTurn)) {
-								goRobot(0);
-								addNode(PATHCOLOR);
-								while (!(getButtonPress(buttonEnter))) {}
-						    while (getButtonPress(buttonEnter)) {}
-								nMotorEncoder[motorA] = 0;
-								goRobot(MOTPOWER);
-								afterTurn = false;
-						}
-            if(SensorValue[S1] != 0)
-            {
+				while(nMotorEncoder[motorA] < PIECE_SIDELENGTH * ENC_CONV) {
+						if(SensorValue[S1] != 0) {
                 goRobot(0);
-                grabBlock(colorInteger, blockObtained);
+                grabBlock();
                 if (foundFinish)
                 		goFinish();
                 goRobot(MOTPOWER);
             }
-            else if(getButtonPress(buttonEnter))
-            {
-                while (getButtonPress(buttonEnter))
-                {}
-                goRobot(0);
-                angleAdjust(); //incomplete
+            if(getButtonPress(buttonAny)) {
+            		angleAdjust();
+          	}
+				}
 
-                while (!(getButtonPress(buttonEnter)))
-                {}
-                while (getButtonPress(buttonEnter))
-                {}
-                goRobot(MOTPOWER);
-            }
-        }
-        goRobot(0);
+        if (SensorValue[S3] == PATHCOLOR)
+        {
+        		goRobot(0);
+						addNode(PATHCOLOR);
+						/*
+						resetGyro(S4);
+						while (!(getButtonPress(buttonEnter))) {}
+				    while (getButtonPress(buttonEnter)) {}
+				    */
 
-        if (SensorValue[S3] == (int)colorGreen)
+						nMotorEncoder[motorA] = 0;
+						goRobot(MOTPOWER);
+						afterTurn = false;
+				}
+        else if (SensorValue[S3] == (int)colorGreen)
         {
         		if(!foundFinish) // Adding node for first occurence
         				addNode((int)colorGreen);
@@ -140,25 +141,22 @@ task main(){
         		displayString(10, "%hd", numblocksobtained); //debugging
 
         		if(blockObtained) { // sort
-        				numblocksobtained++;
         				sortBlock(SensorValue[S2]);
         				timetofinish += time1[T1];
         		}
         		else { // go back
-        				turnLeft((int)colorGreen, numblocksobtained);
+        				turnLeft((int)colorGreen);
         		}
         }
-        else if (SensorValue[S3] == (int)colorRed || SensorValue[S3] == (int)colorBlack)
+        else if (SensorValue[S3] == (int)colorRed)
         {
             addNode((int)colorRed);
-        		turnLeft((int)colorRed, numblocksobtained);
+        		turnLeft((int)colorRed);
         }
         else
       	{
-      			//motor[motorB] = 100;
             turnError();
       	}
-
   	}
     displayString(11, "Maze Solved!");
     displayString(13, "Time: %f s", timetofinish);
@@ -175,6 +173,15 @@ objectives:
 
 void angleAdjust()
 {
+    goRobot(0);
+    while (getButtonPress(buttonAny))
+    {}
+
+    while (!(getButtonPress(buttonAny)))
+    {}
+    while (getButtonPress(buttonAny))
+    {}
+    goRobot(MOTPOWER);
 }
 
 void configureAllSensors(){
@@ -207,13 +214,15 @@ void goRobot(int motorPower) {
     displayString(9, "Current gyro angle %f", getGyroDegrees(S4));
 }
 
-void grabBlock(int & colorInteger, bool & blockObtained)
+void grabBlock()
 {
-    colorInteger = SensorValue[S2];
-    motor[motorB] = -100;
-		wait1Msec(2000);
-    motor[motorC] = 20;
+    numblocksobtained++;
     blockObtained = true;
+
+    motor[motorB] = -100;
+		wait1Msec(1500);
+    motor[motorC] = 20;
+    wait1Msec(1500);
 }
 
 bool releaseBlock()
@@ -286,20 +295,7 @@ void rotateRobot(float angle, int motorPower) {
         motor[motorD] = -motorPower;
     }
 
-    while(abs(getGyroDegrees(S4)) < abs(angle))
-    {
-    		if(getButtonPress(buttonEnter))
-        {
-            while (getButtonPress(buttonEnter))
-            {}
-            goRobot(0);
-            while (!(getButtonPress(buttonEnter)))
-            {}
-            while (getButtonPress(buttonEnter))
-            {}
-            break;
-        }
-    }
+    while(abs(getGyroDegrees(S4)) < abs(angle)) {}
     goRobot(0);
     // Update direction
     if(angle == -90) { // clockwise
@@ -321,20 +317,16 @@ void rotateRobot(float angle, int motorPower) {
     					break;
     		}
   	}
+  	/*
   	while (!(getButtonPress(buttonEnter))) {}
 		while (getButtonPress(buttonEnter)) {}
+		*/
 }
 
 //turn left algorithm at turns or ends of paths
 //TO DO: have it move a certain mimimum distance
-void turnLeft(int currColor, int numblocksobtained)
+void turnLeft(int currColor)
 {
-		nMotorEncoder[motorA] = 0;
-		goRobot(MOTPOWER);
-		while(nMotorEncoder[motorA] < (PIECE_SIDELENGTH/2.0) * ENC_CONV)
-		{}
-		goRobot(0);
-
 		bool firstTurn = true;
     do
     {
@@ -350,25 +342,29 @@ void turnLeft(int currColor, int numblocksobtained)
 
         nMotorEncoder[motorA] = 0;
         goRobot(MOTPOWER); // go until new colour - check if path is available
-        while(SensorValue[S3] == currColor) // could drive to a given distance instead and check colour sensor for some time, then decide from there
-        {}
+        while(SensorValue[S3] == currColor) { // could drive to a given distance instead and check colour sensor for some time, then decide from there
+        		if(getButtonPress(buttonAny)) {
+            		angleAdjust();
+          	}
+        }
         goRobot(0);
 
-        if (SensorValue[S3] != PATHCOLOR && SensorValue[S3] != (int)colorRed && SensorValue[S3] != (int)colorGreen && SensorValue[S3] != (int)colorBlack) //go back if not valid
+        if (SensorValue[S3] != PATHCOLOR && SensorValue[S3] != (int)colorRed && SensorValue[S3] != (int)colorGreen) //go back if not valid
         {
             goRobot(-MOTPOWER);
-            while(nMotorEncoder[motorA] > 0)
-            {}
+            while(nMotorEncoder[motorA] > 0) {
+            		if(getButtonPress(buttonAny)) {
+		            		angleAdjust();
+		          	}
+            }
             goRobot(0);
         }
-        /*
-        else
-            turnError();
-        */
     } while (SensorValue[S3] == currColor);
-    //SensorValue[S3] != (int)colorBlack || SensorValue[S3] != (int)colorGreen
-    //does the turn left algorithm until it detects new colours
-    //but if we see a colour other than red, green, or black, what happens?
+    // Back to middle of tile
+    nMotorEncoder[motorA] = 0;
+    goRobot(MOTPOWER);
+    while(nMotorEncoder[motorA] <= PIECE_SIDELENGTH / 2.5 * ENC_CONV) {}
+    goRobot(0);
     afterTurn = true;
 }
 
