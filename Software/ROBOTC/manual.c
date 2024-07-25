@@ -199,8 +199,13 @@ int grabBlock(){
 
 	while(!getButtonPress(buttonAny)) {}
 		if(!getButtonPress(buttonEnter)){
-			releaseBlock();
-			wait1Msec(1000);
+			motor[motorB] = 100;
+    		wait1Msec(1000);
+    		motor[motorB] = 0;
+    		motor[motorC] = -15;
+    		wait1Msec(1200);
+    		motor[motorC] = 0;
+    		blockObtained = false;
 			grabBlock();
 		}
     return color;
