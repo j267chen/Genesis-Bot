@@ -79,7 +79,8 @@ task main(){
 	// File
 	bool fileOkay = openWritePC(fout, "fileWrite.txt");
 
-	/* test
+	/*
+	// test
 	while (!(getButtonPress(buttonEnter)))
 	{}
 	while (getButtonPress(buttonEnter))
@@ -106,11 +107,11 @@ task main(){
 	direction = 1;
 	foundFinish = true;
 	currRow = 1;
-	currCol = 4;
+	currCol = 3;
 	blockColor = grabBlock();
 	visited = addNode(PATHCOLOR);
 	goFinish();
-
+	/*
 	while (!(getButtonPress(buttonEnter)))
 	{}
 	while (getButtonPress(buttonEnter))
@@ -121,7 +122,7 @@ task main(){
 	displayString(2, "Maze Runner");
 	displayString(3, "Made by JC, ZB, EM, and ES");
 	displayString(5, "Press Enter to start/pause");
-	displayString(7, "%hd", colorBlocks[0]);
+	//displayString(7, "%hd", colorBlocks[0]);
 	while (!(getButtonPress(buttonEnter)))
 	{}
 	while (getButtonPress(buttonEnter))
@@ -165,7 +166,7 @@ task main(){
 				addNode((int)colorGreen);
 
 			foundFinish = true;
-			displayString(10, "%hd", numblocksobtained); //debugging
+			//displayString(10, "%hd", numblocksobtained); //debugging
 
 			if(blockObtained) // sort
 				sortBlock(blockColor);
@@ -189,7 +190,8 @@ task main(){
 	closeFilePC(fout);
 }
 
-void angleAdjust(){
+void angleAdjust()
+{
 	goRobot(0);
 	while (getButtonPress(buttonAny))
 	{}
@@ -201,7 +203,8 @@ void angleAdjust(){
 	goRobot(MOTPOWER);
 }
 
-void configureAllSensors(){
+void configureAllSensors()
+{
 	SensorType[S1] = sensorEV3_Touch;
 	wait1Msec(50);
 	SensorType[S2] = sensorEV3_Color;
@@ -229,7 +232,8 @@ void goRobot(int motorPower) {
 	displayString(9, "Current gyro angle %f", getGyroDegrees(S4));
 }
 
-int grabBlock(){
+int grabBlock()
+{
 	blockObtained = true;
 
 	motor[motorB] = -100;
@@ -239,16 +243,17 @@ int grabBlock(){
 	motor[motorC] = 20;
 	wait1Msec(1000);
 
-	while(!getButtonPress(buttonAny)) {}
-	if(!getButtonPress(buttonEnter)){ // Manual release and regrab loop
-		motor[motorB] = 100;
-		wait1Msec(1000);
-		motor[motorB] = 0;
-		motor[motorC] = -15;
-		wait1Msec(1200);
-		motor[motorC] = 0;
-		blockObtained = false;
-		color = grabBlock();
+	while(!getButtonPress(buttonAny)) {
+		if(SensorValue[S1] == 1){ // Manual release and regrab loop
+			blockObtained = false;
+			motor[motorB] = 100;
+			wait1Msec(1000);
+			motor[motorB] = 0;
+			motor[motorC] = -15;
+			wait1Msec(1200);
+			motor[motorC] = 0;
+			color = grabBlock();
+		}
 	}
 	return color;
 }
@@ -260,6 +265,11 @@ void releaseBlock(){
 	motor[motorB] = 100;
 	wait1Msec(1000);
 	motor[motorB] = 0;
+
+	while (!(getButtonPress(buttonAny)))
+	{}
+	while (getButtonPress(buttonAny))
+	{}
 
 	blockObtained = false;
 }
@@ -293,7 +303,7 @@ void sortBlock(int colorInteger) {//if i were to change to a more dynamic sortin
 	// Go forward, drop, go back
 	nMotorEncoder[motorA] = 0;
 	goRobot(MOTPOWER);
-	while(nMotorEncoder[motorA] < PIECE_SIDELENGTH * ENC_CONV) {}
+	while(nMotorEncoder[motorA] < PIECE_SIDELENGTH *0.85 * ENC_CONV) {}
 	goRobot(0);
 	releaseBlock();
 	wait1Msec(500);
@@ -329,6 +339,7 @@ void sortBlock(int colorInteger) {//if i were to change to a more dynamic sortin
 void rotateRobot(float angle, int motorPower) {
 	motorPower = abs(motorPower);
 	resetGyro(S4);
+	wait1Msec(50);
 
 	if(angle >= 0) //counter-clockwise
 	{
@@ -346,7 +357,7 @@ void rotateRobot(float angle, int motorPower) {
 		if(getButtonPress(buttonAny))
 			angleAdjust();
 	}
-	goRobot(0);
+	motor[motorA] = motor[motorD] = 0;
 
 	// Update direction
 	if(angle == -90) // clockwise
