@@ -189,7 +189,6 @@ void goRobot(int motorPower) {
 }
 
 int grabBlock(){
-    numblocksobtained++;
     blockObtained = true;
 
     motor[motorB] = -100;
@@ -248,6 +247,7 @@ void sortBlock(int colorInteger) {//if i were to change to a more dynamic sortin
     while(nMotorEncoder[motorA] < PIECE_SIDELENGTH * ENC_CONV) {}
   	goRobot(0);
     releaseBlock();
+	numblocksobtained++;
     goRobot(-MOTPOWER);
     while(nMotorEncoder[motorA] > 0) {}
  	goRobot(0);
