@@ -6,16 +6,16 @@ short maze[MAZE_SIZE * MAZE_SIZE]; // ROW * MAZE_SIZE + COL to collape a 2d arra
 bool isVisited[MAZE_SIZE * MAZE_SIZE];
 short moves[MAX_STACK_SIZE];
 short path[MAX_STACK_SIZE];
-short currRow = 0, currCol = 0, direction = 2; // Start at top left (0,0); direction (N,0)(E,1)(S,2)(W,3)
+short currRow = -1, currCol = 0, direction = 2; // Start at top left (0,0); direction (N,0)(E,1)(S,2)(W,3)
 
 const short dRow[] = { 0, 1, 0, -1 }; // Order: WSEN
 const short dCol[] = { 1, 0, -1, 0 };
 
 // Stack
-typedef struct {
+struct mStack{
   short elements[MAX_STACK_SIZE]; // array of elements
   short size; // current size of the stack
-} mStack;
+};
 bool push(mStack *stack, short value);
 short pop(mStack *stack);
 bool isEmpty(mStack *stack);
@@ -34,23 +34,22 @@ void addNode(int color);
 void angleAdjust();
 void configureAllSensors();
 void goRobot(int motorPower);
-void grabBlock();
-bool releaseBlock();
-void sortBlock(int colourInteger);
+int grabBlock();
+void releaseBlock();
+void sortBlock(int colorInteger);
 void rotateRobot(float angle, int motorPower);
 void turnError();
 void turnLeft(int currColor);
 //constants to set drive and turning speeds
-const int MOTPOWER = 30;
+const int MOTPOWER = 35;
 const int MOTSPINPOWER = 20;
 //constants for mapping and navigation
 const int NUMBLOCKS = 3;
 const float PIECE_SIDELENGTH = 15;
-int colorInteger = 0;
 float timetofinish = 0;
-bool blockObtained = false, foundFinish = false, afterTurn = false;
+bool blockObtained = false, foundFinish = false, afterSort = false;
 int numblocksobtained = 0;
-const int colorBlocks[3] = {(int)colorRed, (int)colorGreen, (int)colorBlue};
+int colorBlocks[3] = {(int)colorRed, (int)colorGreen, (int)colorBlue};
 const int PATHCOLOR = (int)colorBlue;
 const float ENC_CONV = 180 / (PI * 2.75);
 
@@ -58,16 +57,6 @@ TFileHandle fout;
 
 task main(){
     configureAllSensors();
-    // Initialize mapping
-    for (short row = 0; row < MAZE_SIZE; row++) {
-            for (short col = 0; col < MAZE_SIZE; col++) {
-                maze[row * MAZE_SIZE + col] = -1;
-            }
-    }
-    for (short i = 0; i < MAX_STACK_SIZE; i++) {
-            path[i] = -1;
-    }
-
 
     // Initialize mapping
     for (short row = 0; row < MAZE_SIZE; row++) {
@@ -79,6 +68,7 @@ task main(){
             path[i] = -1;
     }
     maze[0] = 2;
+    int blockColor = 5;
 
 		// File
 		bool fileOkay = openWritePC(fout, "fileWrite.txt");
@@ -87,16 +77,15 @@ task main(){
     displayString(2, "Maze Runner");
     displayString(3, "Made by JC, ZB, EM, and ES");
     displayString(5, "Press Enter to start/pause");
+    displayString(7, "%hd", colorBlocks[0]);
     while (!(getButtonPress(buttonEnter)))
     {}
     while (getButtonPress(buttonEnter))
     {}
-
     displayString(3, "                               ");
     displayString(5, "                               ");
     displayString(3, "Press Enter to start/pause");
     time1[T1] = 0;
-		displayString(11, "%hd", direction); // debugging
 
     //version 1.1 of maze solving: (turn left algorithm which includes intersection lights)
     //version 1.1 of block acquiring - set blockobtained to false to enable blocks. includes multiblocking
@@ -104,38 +93,39 @@ task main(){
     {
     		displayString(11, "%hd", direction);
 
-    		if(afterTurn) {
-    				addNode(SensorValue[S3]);
-    				/*
-    				while (!(getButtonPress(buttonEnter))) {}
-				    while (getButtonPress(buttonEnter)) {}
-				    */
-				    angleAdjust();
-				    afterTurn = false;
-    		}
     		if (SensorValue[S3] == PATHCOLOR)
         {
-        		goRobot(0);
 						addNode(PATHCOLOR);
-						/*
-						resetGyro(S4);
-						while (!(getButtonPress(buttonEnter))) {}
-				    while (getButtonPress(buttonEnter)) {}
-				    */
+						//resetGyro(S4);
 
 						nMotorEncoder[motorA] = 0;
 						goRobot(MOTPOWER);
-						afterTurn = false;
+						while(nMotorEncoder[motorA] < PIECE_SIDELENGTH * ENC_CONV) {
+								if(SensorValue[S1] != 0) {
+		                goRobot(0);
+		                grabBlock();
+		                if(foundFinish)
+		                {
+		                		addNode(PATHCOLOR);
+		                		goFinish();
+		                }
+		                goRobot(MOTPOWER);
+		            }
+		            if(getButtonPress(buttonAny)) {
+		            		angleAdjust();
+		          	}
+						}
+						goRobot(0);
 				}
     		else if (SensorValue[S3] == (int)colorGreen)
         {
-        		if(!foundFinish) // Adding node for first occurence
+        		if(!afterSort)
         				addNode((int)colorGreen);
-
+						foundFinish = true;
         		displayString(10, "%hd", numblocksobtained); //debugging
 
         		if(blockObtained) { // sort
-        				sortBlock(SensorValue[S2]);
+        				sortBlock(blockColor);
         				timetofinish += time1[T1];
         		}
         		else { // go back
@@ -151,25 +141,6 @@ task main(){
       	{
             turnError();
       	}
-      
-				// Go to next tile
-      	if(!afterTurn)
-      	{
-		    		//nMotorEncoder[motorA] = 0;
-		        //goRobot(MOTPOWER);
-						while(nMotorEncoder[motorA] < PIECE_SIDELENGTH * ENC_CONV) {
-								if(SensorValue[S1] != 0) {
-		                goRobot(0);
-		                grabBlock();
-		                if (foundFinish)
-		                		goFinish();
-		                goRobot(MOTPOWER);
-		            }
-		            if(getButtonPress(buttonAny)) {
-		            		angleAdjust();
-		          	}
-						}
-				}
   	}
     displayString(11, "Maze Solved!");
     displayString(13, "Time: %f s", timetofinish);
@@ -227,70 +198,86 @@ void goRobot(int motorPower) {
     displayString(9, "Current gyro angle %f", getGyroDegrees(S4));
 }
 
-void grabBlock()
+int grabBlock()
 {
     numblocksobtained++;
     blockObtained = true;
 
     motor[motorB] = -100;
 		wait1Msec(1500);
+		int color = SensorValue[S2];
     motor[motorC] = 20;
     wait1Msec(1500);
+    return color;
 }
 
-bool releaseBlock()
+void releaseBlock()
 {
-    motor[motorC] = -10;
-    wait1Msec(1000);
+    motor[motorC] = -15;
+    wait1Msec(1200);
     motor[motorC] = 0;
     motor[motorB] = 100;
-    wait1Msec(2000);
+    wait1Msec(1000);
     motor[motorB] = 0;
 
     blockObtained = false;
-    return true; // needed?
 }
 
-void sortBlock(int colourInteger) //if i were to change to a more dynamic sorting, addition of slotFull array would be added to parameters
+void sortBlock(int colorInteger) //if i were to change to a more dynamic sorting, addition of slotFull array would be added to parameters
 {
+	 	float ext = 1;
+
+		// Face south
+	 	if(direction == 1)
+	 			rotateRobot(-90, MOTSPINPOWER);
+	 	while(direction != 2)
+	 	{
+	 			rotateRobot(90, MOTSPINPOWER);
+	 	}
+
 	 	//Position to middle of tile
     nMotorEncoder[motorA] = 0;
     goRobot(MOTPOWER);
-    while(nMotorEncoder[motorA] <= PIECE_SIDELENGTH * (3/2)) {}
+    while(nMotorEncoder[motorA] < PIECE_SIDELENGTH * ext * ENC_CONV) {}
     goRobot(0);
-    nMotorEncoder[motorA] = 0;
 
     // Turn if needed
-    if(colorInteger == colorBlocks[0]) { //check red, left
-		    rotateRobot(-90, MOTSPINPOWER);
+    if(colorInteger - colorBlocks[0] == 0) { //check red, left
+		    rotateRobot(90, MOTSPINPOWER);
 		} else if (colorInteger == colorBlocks[2]) { //check blue, right
-	      rotateRobot(90, MOTSPINPOWER);
+	      rotateRobot(-90, MOTSPINPOWER);
     }
 
     // Go forward, drop, go back
+    nMotorEncoder[motorA] = 0;
     goRobot(MOTPOWER);
-    while(nMotorEncoder[motorA] <= PIECE_SIDELENGTH * ENC_CONV)
+    while(nMotorEncoder[motorA] < PIECE_SIDELENGTH * 1.5 * ENC_CONV)
     {}
+  	goRobot(0);
     releaseBlock();
     goRobot(-MOTPOWER);
     while(nMotorEncoder[motorA] > 0)
   	{}
  		goRobot(0);
- 		nMotorEncoder[motorA] = 0;
 
  		// Back to green
  		if(colorInteger == colorBlocks[0]) { //check red, left
-		    rotateRobot(-90, MOTSPINPOWER);
+		    rotateRobot(90, MOTSPINPOWER);
 		} else if (colorInteger == colorBlocks[1]) { //check green, straight
-	      rotateRobot(-90, MOTSPINPOWER);
-	      rotateRobot(-90, MOTSPINPOWER);
+	      rotateRobot(90, MOTSPINPOWER);
+	      rotateRobot(90, MOTSPINPOWER);
     } else { // check blue, right
-    		rotateRobot(90, MOTSPINPOWER);
+    		rotateRobot(-90, MOTSPINPOWER);
   	}
+
+  	nMotorEncoder[motorA] = 0;
   	goRobot(MOTPOWER);
-  	while(nMotorEncoder[motorA] < PIECE_SIDELENGTH / 2.1 * ENC_CONV)
+  	while(nMotorEncoder[motorA] < PIECE_SIDELENGTH * ext * ENC_CONV)
   	{}
  		goRobot(0);
+
+ 		afterSort = true;
+ 		angleAdjust();
 }
 
 void rotateRobot(float angle, int motorPower) {
@@ -342,17 +329,20 @@ void rotateRobot(float angle, int motorPower) {
 
 void turnLeft(int currColor)
 {
+		int rotate = 90;
 		bool firstTurn = true;
+		if(maze[currRow * MAZE_SIZE + currCol] != -1)
+				rotate = -90;
     do
     {
     		if(firstTurn)
     		{
-        	rotateRobot(90, MOTSPINPOWER);
+        	rotateRobot(rotate, MOTSPINPOWER);
         	firstTurn = false;
       	}
       	else
       	{
-      		rotateRobot(-90, MOTSPINPOWER);
+      		rotateRobot(-rotate, MOTSPINPOWER);
 				}
 
         nMotorEncoder[motorA] = 0;
@@ -367,7 +357,6 @@ void turnLeft(int currColor)
 				}
         goRobot(0);
 
-
         if (SensorValue[S3] != PATHCOLOR && SensorValue[S3] != (int)colorRed && SensorValue[S3] != (int)colorGreen) //go back if not valid
         {
             goRobot(-MOTPOWER);
@@ -378,9 +367,10 @@ void turnLeft(int currColor)
             }
             goRobot(0);
         }
-    } while (SensorValue[S3] == currColor);
-    // Back to middle of tile
-    afterTurn = true;
+        else
+        		break;
+    } while (true); //(SensorValue[S3] == currColor);
+    angleAdjust();
 }
 
 //accounts for turning error in both directions
@@ -539,6 +529,9 @@ void goFinish() {
 				while(nMotorEncoder[motorA] < PIECE_SIDELENGTH * ENC_CONV) {}
 				goRobot(0);
 				counter++;
+
+				if(counter%3 == 0)
+						angleAdjust();
 		}
 }
 
@@ -584,8 +577,6 @@ void addNode(int color) {
 			break;
 	}
 	maze[currRow * MAZE_SIZE + currCol] = color;
-	if(color == (int)colorGreen)
-			foundFinish = true;
 
 	// debugging
 	for (int row = 0; row < MAZE_SIZE; row++) {
