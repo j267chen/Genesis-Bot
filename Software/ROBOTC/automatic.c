@@ -73,6 +73,7 @@ task main(){
             path[i] = -1;
     }
     maze[0] = 2;
+
     int blockColor = 5;
 
 		// File
@@ -357,8 +358,8 @@ void turnLeft(int currColor, bool visited)
         }
         else
         	break;
-    } while (true); //(SensorValue[S3] == currColor);
-    angleAdjust();
+    } while (true);
+    //angleAdjust();
 }
 
 //accounts for turning error in both directions
@@ -526,8 +527,10 @@ void goFinish() {
 				while(nMotorEncoder[motorA] < PIECE_SIDELENGTH * ENC_CONV) {}
 				goRobot(0);
 				counter++;
+				/*
 				if(counter%3 == 0)
 						angleAdjust();
+				*/
 		}
 }
 
